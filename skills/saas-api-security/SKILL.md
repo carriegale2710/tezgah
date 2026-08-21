@@ -1,255 +1,255 @@
 ---
 name: saas-api-security
 description: >
-  SaaS uygulaması için API güvenlik katmanı kur. Rate limiting, plan bazlı
-  erişim kontrolü, input validation, hata yönetimi, CORS ve health check.
-  Bu skill'i kullanıcı API güvenliği, rate limiting, yetkilendirme, input
-  doğrulama, hata yönetimi veya API koruması ile ilgili bir şey istediğinde
-  kullan. "API'yi koru", "rate limit ekle", "plan kontrolü yap", "input
-  validation" gibi ifadeler tetikler.
+  Set up an API security layer for a SaaS application. Rate limiting,
+  plan-based access control, input validation, error handling, CORS, and
+  health checks. Use this skill when the user wants anything related to
+  API security, rate limiting, authorisation, input validation, error
+  handling, or API protection. Phrases like "secure the API", "add rate
+  limiting", "check the plan", "input validation" trigger this skill.
 ---
 
-# SaaS API Security — Güvenlik ve Kalite Katmanı
+# SaaS API Security — Security and Quality Layer
 
-Bu skill, bir SaaS uygulamasının API katmanını güvenlik, dayanıklılık ve kalite açısından sağlamlaştırır. Diğer katmanların (auth, payments) üzerine son bir koruma ve kalite katmanı olarak eklenir.
+This skill hardens the API layer of a SaaS application from a security, resilience, and quality perspective. It is added as a final protection and quality layer on top of the other layers (auth, payments).
 
-**Bağımlılık:** Bu skill **saas-launcher** orkestratör skill'inin Faz 7'sidir. Bağımsız olarak da kullanılabilir.
+**Dependency:** This skill is Phase 7 of the **saas-launcher** orchestrator skill. It can also be used independently.
 
-**Bağlı skill'ler:**
-- **saas-auth** — Oturum bilgisi API korumasının temelini oluşturur.
-- **saas-payments** — Plan bilgisi erişim kontrolü kararlarını belirler.
+**Related skills:**
+- **saas-auth** — Session data forms the foundation of API protection.
+- **saas-payments** — Plan data drives access control decisions.
 
 ---
 
-## Güvenlik Katmanları Mimarisi
+## Security Layer Architecture
 
-Bir API isteği geldğinde sırasıyla şu katmanlardan geçmelidir:
+An incoming API request must pass through these layers in order:
 
 ```
-İstek geldi
-  → 1. Rate Limiting (çok fazla istek mi?)
-    → 2. Authentication (kim bu?)
-      → 3. Authorization (bu işlemi yapma yetkisi var mı? Planı uygun mu?)
-        → 4. Input Validation (gönderdiği veri geçerli mi?)
-          → 5. İş Mantığı (asıl işlem)
-            → 6. Hata Yönetimi (bir şeyler ters giderse)
-              → Cevap döndür
+Request arrives
+  → 1. Rate Limiting (too many requests?)
+    → 2. Authentication (who is this?)
+      → 3. Authorization (do they have permission? Is their plan sufficient?)
+        → 4. Input Validation (is the submitted data valid?)
+          → 5. Business Logic (the actual operation)
+            → 6. Error Handling (if something goes wrong)
+              → Return response
 ```
 
-Her katman bağımsızdır ve ihlal durumunda sonraki katmanlara geçmeden isteği reddeder.
+Each layer is independent and rejects the request without proceeding to the next layer on violation.
 
 ---
 
 ## 1. Rate Limiting
 
-### Neden Gerekli
+### Why It's Necessary
 
-Rate limiting olmadan:
-- Bir kullanıcı (veya bot) saniyede binlerce istek göndererek sunucunu çökertebilir (DDoS)
-- Brute force saldırıları giriş sayfasını hedef alabilir
-- API'ni bedava kullanan biri kaynaklarını tüketebilir
-- Ödeme webhook endpoint'in dışarıdan spam'lanabilir
+Without rate limiting:
+- A user (or bot) can send thousands of requests per second and crash your server (DDoS)
+- Brute force attacks can target login pages
+- Someone can freely consume your resources via the API
+- Your payment webhook endpoint can be spammed from outside
 
-### Strateji
+### Strategy
 
-Rate limit'i iki seviyede uygula:
+Apply rate limiting at two levels:
 
-**Global seviye (IP bazlı):** Tüm endpoint'lere uygula. Saniyede veya dakikada belirli sayıda istek. Amaç: DDoS ve brute force koruması.
+**Global level (IP-based):** Apply to all endpoints. A set number of requests per second or minute. Purpose: DDoS and brute force protection.
 
-**Endpoint seviyesi (kullanıcı bazlı):** Hassas endpoint'lere ayrıca uygula — login denemesi, checkout oluşturma, e-posta gönderimi. Amaç: kaynakların adil kullanımı.
+**Endpoint level (user-based):** Apply separately to sensitive endpoints — login attempts, checkout creation, email sending. Purpose: fair use of resources.
 
-### Serverless Ortamda Rate Limiting
+### Rate Limiting in Serverless Environments
 
-Serverless ortamlarda (Vercel, Netlify) her istek ayrı bir process'te çalışır. Bu yüzden in-memory rate limiting (bellekte sayaç tutma) çalışmaz — her process kendi belleğine sahiptir, sayaçlar paylaşılmaz.
+In serverless environments (Vercel, Netlify) each request runs in a separate process. This means in-memory rate limiting (keeping a counter in memory) won't work — each process has its own memory and counters aren't shared.
 
-Çözüm: Dış bir veri deposu kullan. Upstash Redis serverless ortamlar için optimize edilmiş managed Redis servisidir. HTTP üzerinden çalışır (TCP bağlantısı gerektirmez), her istekte sayacı Redis'te tutar. Ücretsiz katmanı çoğu erken SaaS için yeterlidir.
+Solution: Use an external data store. Upstash Redis is a managed Redis service optimised for serverless environments. It works over HTTP (no TCP connection required), keeping the counter in Redis on every request. Its free tier is sufficient for most early-stage SaaS.
 
-Basit proje veya MVP'de Upstash bile fazlaysa: rate limiting'i atla ve production'da ihtiyaç ortaya çıkınca ekle. Ama login endpoint'i ve webhook endpoint'i için en azından basit bir koruma koy.
+For a simple project or MVP where even Upstash feels like overkill: skip rate limiting and add it when the need arises in production. But at minimum put a basic protection on your login endpoint and webhook endpoint.
 
-### Rate Limit Yanıtı
+### Rate Limit Response
 
-Limit aşıldığında HTTP 429 (Too Many Requests) döndür. Yanıtta şu bilgileri header olarak ekle:
-- Toplam limit (X-RateLimit-Limit)
-- Kalan hak (X-RateLimit-Remaining)
-- Sıfırlanma zamanı (X-RateLimit-Reset)
+Return HTTP 429 (Too Many Requests) when the limit is exceeded. Include the following information as headers:
+- Total limit (X-RateLimit-Limit)
+- Remaining allowance (X-RateLimit-Remaining)
+- Reset time (X-RateLimit-Reset)
 
-Kullanıcı dostu hata mesajı: "Çok fazla istek gönderildi. Lütfen birkaç saniye bekleyip tekrar deneyin."
-
----
-
-## 2. Authentication Kontrolü
-
-Bu katman **saas-auth** skill'inin kurduğu oturum sistemini tüketir.
-
-Her korumalı API endpoint'inde oturum kontrolü yap:
-- Oturum yoksa → 401 Unauthorized döndür
-- Oturum geçersiz veya süresi dolmuşsa → 401 döndür
-- Oturum geçerliyse → kullanıcı bilgisini sonraki katmana aktar
-
-Middleware ile genel koruma zaten yapılmış olmalı (bkz. **saas-auth**). API route seviyesinde ek kontrol, middleware'in kapsamadığı edge case'ler için güvenlik ağıdır.
+User-friendly error message: "Too many requests. Please wait a few seconds and try again."
 
 ---
 
-## 3. Authorization — Plan Bazlı Erişim Kontrolü
+## 2. Authentication Check
 
-Authentication "kim bu?" sorusunu cevaplar. Authorization "bu kişi bu işlemi yapabilir mi?" sorusunu cevaplar.
+This layer consumes the session system built by the **saas-auth** skill.
 
-### Plan Hiyerarşisi
+Perform a session check on every protected API endpoint:
+- No session → return 401 Unauthorized
+- Invalid or expired session → return 401
+- Valid session → pass user information to the next layer
 
-Plan'ları bir hiyerarşi olarak tanımla: free < starter < pro < enterprise. Her API endpoint'i minimum bir plan seviyesi gerektirir. Kullanıcının planı gereken seviyenin altındaysa 403 Forbidden döndür.
+General protection via middleware should already be in place (see **saas-auth**). The API route-level check is a safety net for edge cases not covered by the middleware.
 
-403 yanıtı kullanıcı dostu olmalı:
-- Mevcut plan bilgisi
-- Gereken plan bilgisi
-- Yükseltme URL'si (fiyatlandırma sayfasına link)
+---
 
-### Plan Kontrol Noktaları
+## 3. Authorization — Plan-Based Access Control
 
-Sadece API route'larda değil, şu noktalarda da plan kontrolü yap:
-- **UI seviyesinde:** Üst plan gerektiren özellikleri görsel olarak kilitle (kilit ikonu, "Pro planı gerektirir" etiketi). Bu UX'tir, güvenlik değil — gerçek kontrol her zaman server-side'da.
-- **API seviyesinde:** Her korumalı endpoint'te plan kontrolü. Bu gerçek güvenlik katmanıdır.
-- **Kaynak limitleri:** "5 projeye kadar" gibi limitleri yeni kaynak oluşturma endpoint'lerinde kontrol et.
+Authentication answers "who is this?" Authorization answers "can this person perform this action?"
 
-### Kullanım Bazlı Limitler
+### Plan Hierarchy
 
-Bazı planlar aylık API çağrısı veya işlem limiti içerir. Bu limitleri takip et:
-- Her API çağrısında sayacı artır
-- Limite yaklaşıldığında uyarı header'ı ekle
-- Limit aşıldığında 429 döndür (rate limit'ten farklı — bu plan limiti)
-- Sayacı her ayın başında sıfırla
+Define plans as a hierarchy: free < starter < pro < enterprise. Each API endpoint requires a minimum plan level. Return 403 Forbidden if the user's plan is below the required level.
+
+The 403 response should be user-friendly:
+- Current plan information
+- Required plan information
+- Upgrade URL (link to the pricing page)
+
+### Plan Check Points
+
+Check plans not only in API routes but also at these points:
+- **UI level:** Visually lock features requiring a higher plan (lock icon, "Requires Pro plan" label). This is UX, not security — the real check is always server-side.
+- **API level:** Plan check on every protected endpoint. This is the real security layer.
+- **Resource limits:** Check limits like "up to 5 projects" in resource creation endpoints.
+
+### Usage-Based Limits
+
+Some plans include a monthly API call or operation limit. Track these limits:
+- Increment the counter on every API call
+- Add a warning header as the limit approaches
+- Return 429 when the limit is exceeded (different from rate limiting — this is a plan limit)
+- Reset the counter at the start of each month
 
 ---
 
 ## 4. Input Validation
 
-### Neden Kritik
+### Why It's Critical
 
-Kullanıcıdan gelen her veri potansiyel olarak kötü niyetlidir. Doğrulanmamış input:
-- SQL Injection (veritabanı manipülasyonu)
-- XSS (zararlı script enjeksiyonu)
-- Tip hataları (string beklerken nesne gelirse çökme)
-- İş mantığı hataları (negatif miktar, çok uzun metin)
+Every piece of data from a user is potentially malicious. Unvalidated input can lead to:
+- SQL Injection (database manipulation)
+- XSS (malicious script injection)
+- Type errors (crashing if an object arrives where a string was expected)
+- Business logic errors (negative amounts, overly long text)
 
-### Validation Stratejisi
+### Validation Strategy
 
-Zod gibi bir şema doğrulama kütüphanesi kullan. Her API endpoint'inin kabul ettiği veriyi bir şema olarak tanımla. Gelen veriyi bu şemadan geçir — geçersizse 400 Bad Request döndür, geçerliyse tip güvenli veri ile devam et.
+Use a schema validation library like Zod. Define the data each API endpoint accepts as a schema. Pass incoming data through the schema — return 400 Bad Request if invalid, proceed with type-safe data if valid.
 
-Doğrulama şemasında tanımlanması gerekenler:
-- Her alanın tipi (string, number, boolean, enum)
-- Zorunlu/opsiyonel alanları
-- Uzunluk/boyut sınırları (max 100 karakter, max 5MB)
-- Format kuralları (e-posta formatı, URL formatı)
-- Değer aralıkları (min: 0, max: 100)
-- İzin verilen değerler (enum: ["free", "starter", "pro"])
+What to define in a validation schema:
+- Type of each field (string, number, boolean, enum)
+- Required/optional fields
+- Length/size limits (max 100 characters, max 5MB)
+- Format rules (email format, URL format)
+- Value ranges (min: 0, max: 100)
+- Allowed values (enum: ["free", "starter", "pro"])
 
-### Hata Yanıt Formatı
+### Error Response Format
 
-Validation hatası yanıtı hangi alanın neden geçersiz olduğunu açıkça belirtmeli:
+A validation error response should clearly indicate which field is invalid and why:
 
 ```
 {
-  "error": "Geçersiz veri",
+  "error": "Invalid data",
   "details": [
-    { "field": "email", "message": "Geçerli bir e-posta adresi gerekli" },
-    { "field": "name", "message": "En fazla 100 karakter olmalı" }
+    { "field": "email", "message": "A valid email address is required" },
+    { "field": "name", "message": "Must be at most 100 characters" }
   ]
 }
 ```
 
-Bu format hem insan tarafından okunabilir hem de client tarafından programatik olarak işlenebilir.
+This format is both human-readable and can be processed programmatically by the client.
 
 ---
 
-## 5. Hata Yönetimi
+## 5. Error Handling
 
-### İlke: Kullanıcıya Yardımcı Ol, Saldırgana Bilgi Verme
+### Principle: Help the User, Don't Inform the Attacker
 
-Hata mesajları iki kitleye hitap eder:
-- **Meşru kullanıcılar:** Ne yanlış gittiğini ve ne yapması gerektiğini anlamalı
-- **Kötü niyetli aktörler:** Sistem hakkında bilgi edinmemeli
+Error messages serve two audiences:
+- **Legitimate users:** They need to understand what went wrong and what to do
+- **Malicious actors:** They should gain no information about the system
 
-Bu denge:
-- Validation hataları → detaylı (kullanıcıya yardımcı)
-- İş mantığı hataları → açıklayıcı ama teknik detaysız
-- Sunucu hataları → genel mesaj ("Bir şeyler yanlış gitti"), detay sadece log'da
+This balance:
+- Validation errors → detailed (helpful to the user)
+- Business logic errors → explanatory but without technical details
+- Server errors → generic message ("Something went wrong"), details only in logs
 
-### Hata Kategorileri ve HTTP Kodları
+### Error Categories and HTTP Codes
 
-| Kod | Anlam | Ne Zaman | Mesaj Detayı |
-|-----|-------|----------|--------------|
-| 400 | Bad Request | Input validation hatası | Detaylı (hangi alan, neden) |
-| 401 | Unauthorized | Oturum yok veya geçersiz | "Giriş yapmanız gerekiyor" |
-| 403 | Forbidden | Plan yetersiz veya yetki yok | Plan bilgisi + yükseltme linki |
-| 404 | Not Found | Kaynak bulunamadı | "Kaynak bulunamadı" |
-| 409 | Conflict | Çakışma (duplicate) | "Bu kaynak zaten mevcut" |
-| 429 | Too Many Requests | Rate limit aşıldı | Bekleme süresi bilgisi |
-| 500 | Internal Server Error | Beklenmeyen hata | Genel mesaj, detay log'da |
+| Code | Meaning | When | Message Detail |
+|------|---------|------|----------------|
+| 400 | Bad Request | Input validation error | Detailed (which field, why) |
+| 401 | Unauthorized | No or invalid session | "You need to log in" |
+| 403 | Forbidden | Insufficient plan or no permission | Plan info + upgrade link |
+| 404 | Not Found | Resource not found | "Resource not found" |
+| 409 | Conflict | Conflict (duplicate) | "This resource already exists" |
+| 429 | Too Many Requests | Rate limit exceeded | Wait time information |
+| 500 | Internal Server Error | Unexpected error | Generic message, details in logs |
 
-### Loglama
+### Logging
 
-Production'da console.log yeterli değildir. Bir loglama servisi kullan (Sentry, LogSnag, Axiom, Vercel Log Drain). Her 500 hatasında:
-- Hata mesajı ve stack trace
-- İstek URL'si, metodu, body'si
-- Kullanıcı ID'si (varsa)
-- Zaman damgası
+`console.log` is not enough in production. Use a logging service (Sentry, LogSnag, Axiom, Vercel Log Drain). On every 500 error:
+- Error message and stack trace
+- Request URL, method, body
+- User ID (if available)
+- Timestamp
 
-Sentry özellikle önerilir — hataları gruplar, trend gösterir, alert gönderir.
+Sentry is especially recommended — it groups errors, shows trends, and sends alerts.
 
 ---
 
 ## 6. CORS (Cross-Origin Resource Sharing)
 
-### Ne Zaman Gerekli
+### When It's Needed
 
-Eğer API'ni sadece kendi frontend'in kullanıyorsa (Next.js full-stack) CORS yapılandırması gerekmez — aynı origin'den gelir.
+If your API is only used by your own frontend (Next.js full-stack) CORS configuration is not needed — requests come from the same origin.
 
-CORS gerekli durumlar:
-- API'ni başka domain'lerden erişilebilir yapıyorsan (public API)
-- Mobil uygulama API'ni kullanıyorsa
-- Üçüncü taraf entegrasyonlar API'ne istek gönderiyorsa
+CORS is needed when:
+- You're making your API accessible from other domains (public API)
+- A mobile app uses your API
+- Third-party integrations send requests to your API
 
-### CORS Yapılandırma İlkeleri
+### CORS Configuration Principles
 
-- Wildcard (`*`) kullanma — sadece güvenilen origin'leri listele
-- İzin verilen HTTP methodlarını sınırla (GET, POST — gereksiz PUT, DELETE açma)
-- Preflight isteklerine (OPTIONS) doğru yanıt ver
-- Credentials (cookie) gerektiren isteklerde `Access-Control-Allow-Credentials: true` ekle
+- Don't use a wildcard (`*`) — only list trusted origins
+- Restrict allowed HTTP methods (GET, POST — don't open unnecessary PUT, DELETE)
+- Correctly respond to preflight requests (OPTIONS)
+- Add `Access-Control-Allow-Credentials: true` for requests requiring credentials (cookies)
 
 ---
 
 ## 7. Health Check Endpoint
 
-Her SaaS'ın `/api/health` endpoint'i olmalı. Bu endpoint:
-- Uygulamanın çalıştığını doğrular
-- Opsiyonel: veritabanı bağlantısını kontrol eder
-- Uptime monitoring servisleri (BetterStack, UptimeRobot) tarafından düzenli aralıklarla çağrılır
-- CI/CD pipeline'larında deployment sonrası doğrulama için kullanılır
+Every SaaS should have a `/api/health` endpoint. This endpoint:
+- Verifies the application is running
+- Optionally checks the database connection
+- Is called at regular intervals by uptime monitoring services (BetterStack, UptimeRobot)
+- Is used for post-deployment verification in CI/CD pipelines
 
-Yanıt: status (ok/degraded), timestamp, uptime. Veritabanı bağlantısı yoksa "degraded" dön ama 200 döndür (uygulama çalışıyor, DB bağlantısı yok).
+Response: status (ok/degraded), timestamp, uptime. Return "degraded" if there's no database connection but still return 200 (application is running, DB connection is down).
 
 ---
 
-## Güvenlik Kontrol Listesi
+## Security Checklist
 
-- Rate limiting tüm public endpoint'lerde aktif mi?
-- Login endpoint'inde brute force koruması var mı?
-- Auth kontrolü tüm private endpoint'lerde yapılıyor mu?
-- Plan kontrolü ücretli özellikler için uygulanıyor mu?
-- Input validation tüm POST/PUT endpoint'lerinde var mı?
-- Hata mesajları hassas bilgi sızdırmıyor mu? (stack trace, DB detayları, dosya yolları)
-- Ortam değişkenleri `NEXT_PUBLIC_` olmadan server-side'da kalıyor mu?
-- Webhook endpoint'lerinde imza doğrulama var mı? (bkz. **saas-payments**)
-- CORS sadece gerekli endpoint'lerde açık mı?
-- Error tracking (Sentry vb.) kurulu mu?
+- Is rate limiting active on all public endpoints?
+- Is there brute force protection on the login endpoint?
+- Is auth checked on all private endpoints?
+- Is plan checking applied for paid features?
+- Is input validation present on all POST/PUT endpoints?
+- Do error messages avoid leaking sensitive information? (stack traces, DB details, file paths)
+- Are environment variables staying server-side without `NEXT_PUBLIC_`?
+- Is signature verification in place on webhook endpoints? (see **saas-payments**)
+- Is CORS only open on the necessary endpoints?
+- Is error tracking (Sentry etc.) installed?
 
 ---
 
 ## Gotchas
 
-- **Rate limit serverless'ta in-memory çalışmaz.** Her function invocation ayrı process. Upstash Redis veya benzeri dış çözüm gerekir.
-- **IP tespiti proxy arkasında.** Vercel veya Cloudflare arkasında gerçek client IP `x-forwarded-for` header'ındadır. Doğrudan `req.ip` güvenilir olmayabilir.
-- **Plan kontrolü UI'da yeterli değil.** Client-side plan kontrolü UX içindir (butonu kilitle, mesaj göster). Asıl kontrol server-side'da olmalı — client-side kontrol kolayca bypass edilir.
-- **Validation sadece API'de değil.** Client tarafında da validation yap (UX için — hızlı geri bildirim), ama güvenlik için server-side validation zorunlu. Client-side validation bypass edilebilir.
-- **500 hatasında detay verme.** "Internal server error: MongoDB connection timeout at line 42" gibi mesajlar saldırgana veritabanı türünü ve yapısını ifşa eder. Kullanıcıya "Bir şeyler yanlış gitti" de, detayı logla.
-- **Hata tracking kurulmadan launch yapma.** Kullanıcılar hata raporlamaz — sessizce giderler. Sentry veya benzeri bir araç yoksa hataları asla öğrenemezsin.
-- **Health check endpoint'i auth'a bağlama.** Monitoring servisleri auth token göndermez. Health check public ve lightweight olmalı.
+- **Rate limiting doesn't work in-memory on serverless.** Each function invocation is a separate process. Upstash Redis or a similar external solution is required.
+- **IP detection behind a proxy.** Behind Vercel or Cloudflare, the real client IP is in the `x-forwarded-for` header. Directly using `req.ip` may be unreliable.
+- **Plan checks in the UI are not enough.** Client-side plan checks are for UX (lock the button, show a message). The real check must be server-side — client-side checks can easily be bypassed.
+- **Validation not just in the API.** Also validate on the client side (for UX — fast feedback), but server-side validation is mandatory for security. Client-side validation can be bypassed.
+- **Don't expose details on 500 errors.** Messages like "Internal server error: MongoDB connection timeout at line 42" reveal your database type and structure to an attacker. Say "Something went wrong" to the user, log the details.
+- **Don't launch without error tracking.** Users don't report errors — they leave silently. Without Sentry or a similar tool, you'll never learn about errors.
+- **Don't put the health check endpoint behind auth.** Monitoring services don't send auth tokens. The health check should be public and lightweight.
