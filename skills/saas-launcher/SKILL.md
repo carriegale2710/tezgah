@@ -1,333 +1,333 @@
 ---
 name: saas-launcher
 description: >
-  Sıfırdan production-ready bir SaaS uygulaması kur. Ödeme, kimlik doğrulama,
-  veritabanı, e-posta, landing page, SEO ve API güvenliği dahil tüm katmanları
-  kapsar. Kullanıcı SaaS kurmak, web uygulaması başlatmak, AI aracı oluşturmak
-  veya online ürün çıkarmak istediğinde bu skill'i kullan — "startup kur",
-  "proje başlat", "uygulama yap" gibi ifadeler dahil. Mevcut bir projeye
-  tek bir katman eklemek (sadece ödeme, sadece auth vb.) için ilgili alt
-  skill'e yönlendir.
+  Build a production-ready SaaS application from scratch. Covers every layer
+  including payments, authentication, database, email, landing page, SEO, and
+  API security. Use this skill when the user wants to launch a SaaS, start a
+  web app, build an AI tool, or ship an online product — including phrases like
+  "start a project", "build an app", "launch a startup". For adding a single
+  layer to an existing project (payments only, auth only, etc.), redirect to
+  the relevant sub-skill.
 ---
 
 # SaaS Launcher
 
-Bu skill, bir SaaS uygulamasının sıfırdan production'a taşınmasını yöneten orkestratör skill'dir. Kendisi kod üretmez — kararları yönetir, sırayı belirler ve her katman için ilgili uzman skill'e yönlendirir.
+This skill is the orchestrator for taking a SaaS application from zero to production. It does not generate code itself — it manages decisions, determines the sequence, and delegates each layer to the relevant specialist skill.
 
-## İlgili Skill'ler
+## Related Skills
 
-Bu skill aşağıdaki uzman skill'lerle birlikte çalışır. Her biri bağımsız olarak da kullanılabilir:
+This skill works alongside the following specialist skills. Each can also be used independently:
 
-- **saas-database** — Supabase veritabanı altyapısı, şema tasarımı ve RLS
-- **saas-auth** — Kimlik doğrulama ve oturum yönetimi
-- **saas-payments** — Ödeme sistemi ve abonelik yönetimi
-- **saas-email** — Transactional e-posta ve DNS altyapısı
-- **saas-storage** — Dosya depolama ve görsel yönetimi (opsiyonel)
-- **saas-landing-seo** — Landing page stratejisi ve arama motoru optimizasyonu
-- **saas-legal** — KVKK/GDPR uyumluluğu ve yasal sayfalar
-- **saas-api-security** — API koruma, rate limiting ve input validation
-- **saas-testing** — Test stratejisi ve kalite güvencesi
-- **saas-analytics** — PostHog ile ürün analizi ve kullanıcı takibi
-- **saas-deployment** — Production'a taşıma ve operasyonel hazırlık
-
----
-
-## Faz 0: Keşif Görüşmesi
-
-Hiçbir teknik karar almadan önce kullanıcıyla kapsamlı bir keşif görüşmesi yap. Bu görüşmenin amacı ürünü, hedef kitleyi ve teknik gereksinimleri netleştirmektir.
-
-### Sorulması Gereken Sorular
-
-**Ürün ve İş Modeli:**
-- Uygulamanın temel işlevi ne? Bir cümleyle açıklayabilir misin?
-- Hedef kitlen kim? (bireysel kullanıcı, küçük işletme, enterprise)
-- Gelir modelin ne? (aylık abonelik, yıllık abonelik, tek seferlik ödeme, freemium, kullanım bazlı)
-- Kaç farklı fiyat planı olacak?
-- Ücretsiz deneme süresi olacak mı?
-
-**Kullanıcı Deneyimi:**
-- Kullanıcılar nasıl kayıt olacak? (Google ile giriş, e-posta/şifre, magic link, birden fazlası)
-- Çok dilli destek gerekiyor mu?
-- Hangi cihazlarda kullanılacak? (web, mobil web, native mobil)
-
-**Teknik Tercihler:**
-- Tercih ettiğin bir tech stack var mı? (framework, veritabanı, hosting)
-- Mevcut kullandığın araçlar veya hesaplar var mı? (Stripe, Vercel, AWS vb.)
-- Takım büyüklüğü? (solo founder, küçük takım, büyük ekip)
-
-**Zaman ve Öncelik:**
-- Ne kadar sürede launch etmek istiyorsun?
-- MVP mi, tam ürün mü?
-- Hangi özellikler Day 1 için zorunlu, hangileri sonra eklenebilir?
-
-### Keşif Sonrası Çıktı
-
-Keşif görüşmesi tamamlandığında kullanıcıya şu bilgileri özetle:
-- Seçilen tech stack ve her seçimin gerekçesi
-- Faz sıralaması ve tahmini zaman çizelgesi
-- Day 1 özellik listesi vs. sonraya bırakılanlar
-- Oluşturulması gereken dış hesaplar listesi (Stripe, Google Cloud Console, e-posta servisi, hosting vb.)
+- **saas-database** — Supabase database infrastructure, schema design, and RLS
+- **saas-auth** — Authentication and session management
+- **saas-payments** — Payment system and subscription management
+- **saas-email** — Transactional email and DNS infrastructure
+- **saas-storage** — File storage and asset management (optional)
+- **saas-landing-seo** — Landing page strategy and search engine optimisation
+- **saas-legal** — GDPR/Privacy Act compliance and legal pages
+- **saas-api-security** — API protection, rate limiting, and input validation
+- **saas-testing** — Testing strategy and quality assurance
+- **saas-analytics** — Product analytics and user tracking with PostHog
+- **saas-deployment** — Taking to production and operational readiness
 
 ---
 
-## Faz 1: Tech Stack Kararları
+## Phase 0: Discovery Interview
 
-Her karar için kullanıcının cevaplarını, projenin ihtiyaçlarını ve ekosistem olgunluğunu tartarak bir öneri sun. Kullanıcı kararlarını zaten verdiyse doğrudan onayla ve ilerle.
+Before making any technical decisions, run a thorough discovery interview with the user. The goal is to clarify the product, target audience, and technical requirements.
 
-### Framework Seçimi
+### Questions to Ask
 
-Varsayılan önerimiz Next.js (App Router + TypeScript). Gerekçe: Server ve client rendering aynı projede, API route'ları dahili, React ekosistemi, Vercel ile sıfır sürtünme deployment. TypeScript her projede zorunlu olmalı — büyüdükçe tip güvenliği hayat kurtarır.
+**Product and Business Model:**
+- What is the core function of the app? Can you describe it in one sentence?
+- Who is your target audience? (individual users, small business, enterprise)
+- What is your revenue model? (monthly subscription, annual subscription, one-time payment, freemium, usage-based)
+- How many pricing tiers will there be?
+- Will there be a free trial period?
 
-Alternatif değerlendirme noktaları:
-- Nuxt.js, yalnızca kullanıcı Vue ekosistemine hakimse ve React öğrenme maliyeti kabul edilemezse
-- SvelteKit, yalnızca çok küçük bundle boyutu kritikse
-- Remix, yalnızca form-ağırlıklı uygulamalarda ve nested routing çok karmaşıksa
+**User Experience:**
+- How will users sign up? (Google login, email/password, magic link, multiple options)
+- Is multi-language support needed?
+- Which devices will it be used on? (web, mobile web, native mobile)
 
-### Veritabanı Seçimi
+**Technical Preferences:**
+- Do you have a preferred tech stack? (framework, database, hosting)
+- Are there existing tools or accounts you already use? (Stripe, Vercel, AWS, etc.)
+- Team size? (solo founder, small team, large team)
 
-Üç ana yol:
+**Time and Priority:**
+- How quickly do you want to launch?
+- MVP or full product?
+- Which features are essential for Day 1, and which can be added later?
 
-**Supabase (PostgreSQL)** — Varsayılan önerimiz. Auth, veritabanı, realtime ve storage tek çatı altında. Dashboard ile görsel yönetim. Ücretsiz katman cömert. En iyi seçim: çoğu SaaS projesi, özellikle solo founder'lar.
+### Post-Discovery Output
 
-**MongoDB Atlas** — Şemasız esneklik gerektiren projeler için. Veri yapısı sık değişiyorsa veya iç içe doküman yapıları baskınsa. Mongoose ile hızlı prototipleme. En iyi seçim: içerik odaklı uygulamalar, kullanıcı tarafından oluşturulan yapılandırılmamış veri.
-
-**Prisma + PostgreSQL** — Tip güvenli veritabanı sorguları, migration geçmişi, şema versiyonlaması. Railway veya Neon gibi managed PostgreSQL ile. En iyi seçim: birden fazla geliştiricinin çalıştığı projeler, karmaşık ilişkisel veri.
-
-### Ödeme Seçimi
-
-Detaylı karar rehberi için **saas-payments** skill'ine yönlendir. Kısa özet:
-
-**Stripe** — Sektör standardı, en düşük komisyon (%2.9 + $0.30), en iyi dokümantasyon. Vergi yönetimi ayrıca yapılandırılmalı. Varsayılan önerimiz.
-
-**Lemon Squeezy** — Merchant of Record modeli sayesinde KDV/vergi yönetimini platform halleder. Komisyon daha yüksek (%5 + $0.50) ama vergi sorumluluğu sıfır. Türkiye'den global satış yapıyorsan ciddi avantaj.
-
-### E-posta Seçimi
-
-Detaylı rehber için **saas-email** skill'ine yönlendir. Kısa özet:
-
-**Resend** — Modern API, React Email ile güzel şablonlar, Next.js uyumu mükemmel. Varsayılan önerimiz.
-
-**Mailgun** — Yüksek hacim, gelişmiş routing, inbound e-posta işleme gerektiren projeler için.
-
-### Hosting Seçimi
-
-Detaylı rehber için **saas-deployment** skill'ine yönlendir. Kısa özet:
-
-**Vercel** — Next.js'in evi, sıfır konfigürasyon. Varsayılan önerimiz.
-
-**Railway** — Veritabanı + backend + frontend tek platformda isteyenler için.
-
-**Fly.io** — Global dağıtım ve container bazlı deployment isteyenler için.
+Once the discovery interview is complete, summarise the following for the user:
+- Chosen tech stack and the rationale for each choice
+- Phase sequence and estimated timeline
+- Day 1 feature list vs. deferred items
+- List of external accounts that need to be created (Stripe, Google Cloud Console, email service, hosting, etc.)
 
 ---
 
-## Faz 2: Temel Altyapı
+## Phase 1: Tech Stack Decisions
 
-İlk teknik adımlar. Bu fazda yapılacaklar:
+For each decision, weigh the user's answers, project needs, and ecosystem maturity, then make a recommendation. If the user has already made decisions, confirm them and move on.
 
-1. **Proje iskeleti:** Seçilen framework ile proje oluştur. TypeScript, Tailwind CSS ve temel UI kütüphanesi (shadcn/ui önerilen) kurulumu. Klasör yapısını oluştur — route grupları, lib dizini, bileşen dizini, konfigürasyon dizini, tip tanımları.
+### Framework Selection
 
-2. **Ortam değişkenleri mimarisi:** `.env.local` yapısını kur. Her servise ait değişkenleri grupla ve açıklayıcı yorumlar ekle. `.env.local.example` şablonunu oluştur. `.gitignore`'a eklemeyi unutma.
+Our default recommendation is Next.js (App Router + TypeScript). Rationale: server and client rendering in the same project, built-in API routes, React ecosystem, zero-friction deployment with Vercel. TypeScript should be mandatory for every project — type safety saves you as the project grows.
 
-3. **Veritabanı bağlantısı:** **saas-database** skill'ini aktive et. Supabase projesini oluştur, şemayı tasarla, RLS politikalarını kur, connection pooling'i yapılandır. Detaylı rehber **saas-database** skill'inde.
+Alternative evaluation points:
+- Nuxt.js, only if the user is already deep in the Vue ecosystem and the cost of learning React is unacceptable
+- SvelteKit, only if very small bundle size is critical
+- Remix, only for form-heavy applications where nested routing is very complex
 
-4. **Temel layout:** Kök layout dosyasını oluştur — font yükleme, metadata, SessionProvider. Public sayfa grubu (landing, login) ve korumalı sayfa grubu (dashboard) için route gruplarını ayır.
+### Database Selection
 
-Bu faz tamamlandığında `npm run dev` ile çalışan, boş ama yapısal olarak sağlam bir proje olmalı.
+Three main paths:
 
----
+**Supabase (PostgreSQL)** — Our default recommendation. Auth, database, realtime, and storage under one roof. Visual management via dashboard. Generous free tier. Best choice: most SaaS projects, especially solo founders.
 
-## Faz 3: Kimlik Doğrulama
+**MongoDB Atlas** — For projects requiring schema-less flexibility. If data structure changes frequently or nested document structures dominate. Fast prototyping with Mongoose. Best choice: content-driven apps, unstructured user-generated data.
 
-**saas-auth** skill'ini aktive et. Bu fazda:
+**Prisma + PostgreSQL** — Type-safe database queries, migration history, schema versioning. With managed PostgreSQL like Railway or Neon. Best choice: projects with multiple developers, complex relational data.
 
-- Seçilen auth stratejisini yapılandır (OAuth, Magic Link, e-posta/şifre veya kombinasyon)
-- Giriş ve kayıt sayfalarını oluştur
-- Korumalı route'lar için middleware kur
-- Oturum bilgisini server ve client tarafında erişilebilir yap
-- Kullanıcı modeliyle entegrasyonu sağla
+### Payment Selection
 
-Auth, diğer tüm katmanların temelini oluşturur. Ödeme sistemi kullanıcı kimliğine bağlıdır, e-posta gönderimi kullanıcı bilgisine bağlıdır, API koruması oturuma bağlıdır. Bu yüzden auth her zaman ödemeden önce tamamlanmalıdır.
+For the detailed decision guide, delegate to the **saas-payments** skill. Short summary:
 
----
+**Stripe** — Industry standard, lowest commission (2.9% + $0.30), best documentation. Tax management must be configured separately. Our default recommendation.
 
-## Faz 4: Ödeme Sistemi
+**Lemon Squeezy** — As a Merchant of Record, the platform handles VAT/tax management. Commission is higher (5% + $0.50) but zero tax liability. A significant advantage if selling globally.
 
-**saas-payments** skill'ini aktive et. Bu fazda:
+### Email Selection
 
-- Fiyat planlarını tanımla ve yapılandır
-- Checkout akışını kur (kullanıcı → ödeme sayfası → başarı/iptal)
-- Webhook handler'ı oluştur ve imza doğrulamayı uygula
-- Abonelik yaşam döngüsünü yönet (başlangıç, yenileme, güncelleme, iptal, ödeme hatası)
-- Müşteri portalı entegrasyonu
-- Plan bazlı erişim kontrolü (hangi özellikler hangi plana ait)
+For the detailed guide, delegate to the **saas-email** skill. Short summary:
 
-Ödeme, SaaS'ın kalbidir. Webhook handler en kritik tek dosyadır — buradaki hatalar doğrudan gelir kaybına yol açar. Bu fazda acele etme.
+**Resend** — Modern API, beautiful templates with React Email, excellent Next.js compatibility. Our default recommendation.
 
----
+**Mailgun** — For projects requiring high volume, advanced routing, or inbound email processing.
 
-## Faz 5: E-posta Altyapısı
+### Hosting Selection
 
-**saas-email** skill'ini aktive et. Bu fazda:
+For the detailed guide, delegate to the **saas-deployment** skill. Short summary:
 
-- E-posta servisini yapılandır
-- DNS kayıtlarını ayarla (SPF, DKIM, DMARC) — kullanıcıyı adım adım yönlendir
-- Temel e-posta şablonlarını oluştur (hoş geldin, ödeme onayı, ödeme hatası)
-- Magic Link kullanılıyorsa giriş e-postası şablonunu özelleştir
+**Vercel** — Next.js's home, zero configuration. Our default recommendation.
 
-DNS ayarlarının yayılması 24-48 saat sürebilir. Bu yüzden e-posta fazını mümkün olduğunca erken başlat — en azından DNS kayıtlarını projenin ilk gününde ekle.
+**Railway** — For those who want database + backend + frontend on one platform.
+
+**Fly.io** — For those who want global distribution and container-based deployment.
 
 ---
 
-## Faz 6: Landing Page ve SEO
+## Phase 2: Core Infrastructure
 
-**saas-landing-seo** skill'ini aktive et. Bu fazda:
+First technical steps. What to do in this phase:
 
-- Landing page akışını tasarla ve bileşenlerini oluştur
-- SEO temellerini kur (metadata, sitemap, robots.txt, Open Graph)
-- Performans optimizasyonu (görsel, font, bundle boyutu)
-- İstenirse blog sistemi kur
+1. **Project scaffold:** Create the project with the chosen framework. Set up TypeScript, Tailwind CSS, and a base UI library (shadcn/ui recommended). Create folder structure — route groups, lib directory, component directory, config directory, type definitions.
 
-Landing page ürünün vitrin yüzüdür. İlk izlenim burada oluşur. Fiyatlandırma bölümü Faz 4'teki plan tanımlarıyla uyumlu olmalı.
+2. **Environment variable architecture:** Set up the `.env.local` structure. Group variables by service and add descriptive comments. Create the `.env.local.example` template. Don't forget to add to `.gitignore`.
 
----
+3. **Database connection:** Activate the **saas-database** skill. Create the Supabase project, design the schema, set up RLS policies, configure connection pooling. Detailed guide in the **saas-database** skill.
 
-## Faz 6.5: Dosya Depolama (Opsiyonel)
+4. **Base layout:** Create the root layout file — font loading, metadata, SessionProvider. Separate route groups for the public page group (landing, login) and the protected page group (dashboard).
 
-Proje dosya yükleme gerektiriyorsa (profil fotoğrafları, kullanıcı dokümanları, görseller) **saas-storage** skill'ini aktive et. Bu fazda:
-
-- Supabase Storage yapılandırması
-- Dosya yükleme endpoint'leri ve güvenlik kontrolleri
-- Görsel optimizasyonu
-- Plan bazlı depolama limitleri
-
-Her SaaS'ta gerekmez. Yalnızca dosya yükleme ihtiyacı varsa uygula.
+When this phase is complete, there should be a running project with `npm run dev` — empty but structurally sound.
 
 ---
 
-## Faz 7: Yasal Uyumluluk
+## Phase 3: Authentication
 
-**saas-legal** skill'ini aktive et. Bu fazda:
+Activate the **saas-auth** skill. In this phase:
 
-- Gizlilik politikası sayfası oluştur (Google OAuth onayı için de gerekli)
-- Kullanım koşulları sayfası oluştur
-- KVKK aydınlatma metni hazırla
-- Çerez onayı mekanizmasını kur
-- Hesap silme akışını uygula
+- Configure the chosen auth strategy (OAuth, Magic Link, email/password, or combination)
+- Create login and registration pages
+- Set up middleware for protected routes
+- Make session data accessible on both server and client
+- Integrate with the user model
 
-Yasal sayfalar landing page'in footer'ında yer almalı. Google OAuth onay ekranı gizlilik politikası URL'si gerektirir — bu yüzden auth'tan önce en azından taslak hazırla.
-
----
-
-## Faz 8: API Güvenliği
-
-**saas-api-security** skill'ini aktive et. Bu fazda:
-
-- Rate limiting uygula
-- Plan bazlı API koruması kur
-- Input validation katmanını ekle
-- Hata yönetimi standardize et
-- Health check endpoint'i oluştur
-
-Bu faz genellikle diğer fazların üstüne son bir güvenlik ve kalite katmanı olarak eklenir.
+Auth forms the foundation of every other layer. The payment system depends on user identity, email sending depends on user data, API protection depends on session. That's why auth must always be completed before payments.
 
 ---
 
-## Faz 9: Test
+## Phase 4: Payment System
 
-**saas-testing** skill'ini aktive et. Bu fazda:
+Activate the **saas-payments** skill. In this phase:
 
-- Vitest ile birim ve entegrasyon testleri kur
-- Webhook handler testlerini yaz (en kritik test)
-- Playwright ile E2E testler kur (auth ve checkout akışları)
-- CI pipeline'a test adımlarını ekle
+- Define and configure pricing plans
+- Set up the checkout flow (user → payment page → success/cancel)
+- Create the webhook handler and implement signature verification
+- Manage the subscription lifecycle (start, renewal, upgrade, cancellation, payment failure)
+- Customer portal integration
+- Plan-based access control (which features belong to which plan)
 
-Deployment'tan önce en azından webhook handler ve auth akışı test edilmiş olmalı.
-
----
-
-## Faz 10: Analytics
-
-**saas-analytics** skill'ini aktive et. Bu fazda:
-
-- PostHog entegrasyonunu kur
-- Temel event tracking'i yapılandır (kayıt, giriş, checkout, özellik kullanımı)
-- Kullanıcı tanımlama (identify) bağlantısını kur
-- Dönüşüm hunisi ve temel dashboard'u oluştur
-- Feature flag altyapısını kur (opsiyonel)
-
-Analytics deployment ile paralel veya hemen sonrasında kurulabilir.
+Payments are the heart of a SaaS. The webhook handler is the single most critical file — bugs here directly cause revenue loss. Don't rush this phase.
 
 ---
 
-## Faz 11: Deployment
+## Phase 5: Email Infrastructure
 
-**saas-deployment** skill'ini aktive et. Bu fazda:
+Activate the **saas-email** skill. In this phase:
 
-- Production ortamını hazırla
-- Ortam değişkenlerini production değerleriyle güncelle
-- Domain ve SSL yapılandır
-- Ödeme sistemini live mode'a geçir
-- DNS kayıtlarını tamamla
-- Son doğrulama testlerini yap
-- İzleme ve hata takibi kur
+- Configure the email service
+- Set up DNS records (SPF, DKIM, DMARC) — guide the user step by step
+- Create basic email templates (welcome, payment confirmation, payment failure)
+- If Magic Link is used, customise the login email template
+
+DNS changes can take 24–48 hours to propagate. That's why you should start the email phase as early as possible — add at least the DNS records on the first day of the project.
 
 ---
 
-## Fazlar Arası Bağımlılıklar
+## Phase 6: Landing Page and SEO
+
+Activate the **saas-landing-seo** skill. In this phase:
+
+- Design the landing page flow and create its components
+- Set up SEO fundamentals (metadata, sitemap, robots.txt, Open Graph)
+- Performance optimisation (images, fonts, bundle size)
+- Set up blog system if desired
+
+The landing page is the shop window of the product. First impressions are formed here. The pricing section must align with the plan definitions from Phase 4.
+
+---
+
+## Phase 6.5: File Storage (Optional)
+
+If the project requires file uploads (profile photos, user documents, images), activate the **saas-storage** skill. In this phase:
+
+- Supabase Storage configuration
+- File upload endpoints and security checks
+- Image optimisation
+- Plan-based storage limits
+
+Not every SaaS needs this. Only implement if file upload is required.
+
+---
+
+## Phase 7: Legal Compliance
+
+Activate the **saas-legal** skill. In this phase:
+
+- Create the privacy policy page (also required for Google OAuth approval)
+- Create the terms of service page
+- Prepare data collection disclosure text
+- Set up the cookie consent mechanism
+- Implement the account deletion flow
+
+Legal pages should appear in the landing page footer. The Google OAuth consent screen requires a privacy policy URL — so at minimum prepare a draft before auth.
+
+---
+
+## Phase 8: API Security
+
+Activate the **saas-api-security** skill. In this phase:
+
+- Implement rate limiting
+- Set up plan-based API protection
+- Add the input validation layer
+- Standardise error handling
+- Create a health check endpoint
+
+This phase is typically added as a final security and quality layer on top of the other phases.
+
+---
+
+## Phase 9: Testing
+
+Activate the **saas-testing** skill. In this phase:
+
+- Set up unit and integration tests with Vitest
+- Write webhook handler tests (the most critical tests)
+- Set up E2E tests with Playwright (auth and checkout flows)
+- Add test steps to the CI pipeline
+
+At minimum, the webhook handler and auth flow should be tested before deployment.
+
+---
+
+## Phase 10: Analytics
+
+Activate the **saas-analytics** skill. In this phase:
+
+- Set up PostHog integration
+- Configure basic event tracking (signup, login, checkout, feature usage)
+- Set up user identification (identify) connection
+- Create conversion funnel and basic dashboard
+- Set up feature flag infrastructure (optional)
+
+Analytics can be set up in parallel with or immediately after deployment.
+
+---
+
+## Phase 11: Deployment
+
+Activate the **saas-deployment** skill. In this phase:
+
+- Prepare the production environment
+- Update environment variables with production values
+- Configure domain and SSL
+- Switch the payment system to live mode
+- Complete DNS records
+- Run final verification tests
+- Set up monitoring and error tracking
+
+---
+
+## Inter-Phase Dependencies
 
 ```
-Faz 0 (Keşif) → Faz 1 (Tech Stack)
-                      ↓
-                 Faz 2 (Altyapı + DB) ←── saas-database
-                      ↓
-                 Faz 3 (Auth) ←── Faz 5 (E-posta) gerektirebilir (Magic Link)
-                      ↓
-                 Faz 4 (Ödeme) ←── Auth tamamlanmış olmalı
-                      ↓
-                 Faz 5 (E-posta) ←── DNS kayıtları erken başlatılabilir
-                      ↓
-                 Faz 6 (Landing) ←── Fiyatlandırma bölümü Faz 4 ile uyumlu olmalı
-                  ↓         ↓
-     Faz 6.5 (Storage)  Faz 7 (Yasal) ←── Gizlilik politikası OAuth için de gerekli
-                  ↓         ↓
-                 Faz 8 (API Güvenliği)
-                      ↓
-                 Faz 9 (Test) ←── Deployment öncesi kalite güvencesi
-                      ↓
-                 Faz 10 (Analytics)
-                      ↓
-                 Faz 11 (Deployment) ←── Tüm fazlar tamamlanmış olmalı
+Phase 0 (Discovery) → Phase 1 (Tech Stack)
+                            ↓
+                   Phase 2 (Infrastructure + DB) ←── saas-database
+                            ↓
+                   Phase 3 (Auth) ←── Phase 5 (Email) may be needed (Magic Link)
+                            ↓
+                   Phase 4 (Payments) ←── Auth must be complete
+                            ↓
+                   Phase 5 (Email) ←── DNS records can be started early
+                            ↓
+                   Phase 6 (Landing) ←── Pricing section must align with Phase 4
+                      ↓           ↓
+       Phase 6.5 (Storage)   Phase 7 (Legal) ←── Privacy policy needed for OAuth too
+                      ↓           ↓
+                   Phase 8 (API Security)
+                            ↓
+                   Phase 9 (Testing) ←── Quality assurance before deployment
+                            ↓
+                   Phase 10 (Analytics)
+                            ↓
+                   Phase 11 (Deployment) ←── All phases must be complete
 ```
 
-**Paralel çalışabilecek fazlar:**
-- DNS kayıtları (Faz 5'in bir parçası) Faz 2 ile paralel başlatılabilir
-- Landing page tasarımı (Faz 6) Faz 4 ile paralel ilerleyebilir
-- Google OAuth başvurusu (Faz 3'ün bir parçası) onay süreci nedeniyle erken başlatılmalı
-- Yasal sayfalar (Faz 7) ve Storage (Faz 6.5) Landing ile paralel ilerleyebilir
-- Analytics (Faz 10) Deployment ile paralel kurulabilir
+**Phases that can run in parallel:**
+- DNS records (part of Phase 5) can be started in parallel with Phase 2
+- Landing page design (Phase 6) can progress in parallel with Phase 4
+- Google OAuth application (part of Phase 3) should be started early due to approval process
+- Legal pages (Phase 7) and Storage (Phase 6.5) can progress in parallel with Landing
+- Analytics (Phase 10) can be set up in parallel with Deployment
 
 ---
 
-## MVP vs. Tam Ürün Stratejisi
+## MVP vs. Full Product Strategy
 
-Eğer kullanıcı hızlı launch istiyorsa, MVP sırasını öner:
+If the user wants to launch fast, suggest the MVP sequence:
 
-**MVP (Hafta 1):** Faz 0 + 1 + 2 + 3 + 4 + 7 (yasal taslak) + 11 — Çalışan auth, ödeme, gizlilik politikası taslağı ve boş dashboard. Landing page basit bir hero + pricing olabilir.
+**MVP (Week 1):** Phase 0 + 1 + 2 + 3 + 4 + 7 (legal draft) + 11 — Working auth, payments, privacy policy draft, and empty dashboard. Landing page can be a simple hero + pricing.
 
-**İkinci Dalga (Hafta 2-3):** Faz 5 + 6 + 8 + 9 — Düzgün e-posta altyapısı, dönüşüm odaklı landing page, API güvenlik katmanı, temel testler.
+**Second Wave (Weeks 2–3):** Phase 5 + 6 + 8 + 9 — Proper email infrastructure, conversion-focused landing page, API security layer, basic tests.
 
-**Üçüncü Dalga (Hafta 3-4):** Faz 6.5 + 10 — Dosya depolama (gerekiyorsa), analytics, feature flags.
+**Third Wave (Weeks 3–4):** Phase 6.5 + 10 — File storage (if needed), analytics, feature flags.
 
-**Sürekli İyileştirme:** Blog, A/B test, müşteri geri bildirimi döngüsü, yasal dokümanların hukukçu onayı.
+**Continuous Improvement:** Blog, A/B testing, customer feedback loop, legal documents reviewed by a lawyer.
 
 ---
 
-## Genel Gotchas
+## General Gotchas
 
-- **Dış servis hesapları erken oluşturulmalı.** Google OAuth onay süreci, DNS yayılımı, Stripe account review — bunlar gün alabilir. İlk gün hesapları aç.
-- **Environment variable disiplini.** `NEXT_PUBLIC_` prefix'i olmayan değişkenler client'ta görünmez. Hassas anahtarlar asla public prefix almamalı.
-- **Webhook'lar SaaS'ın sinir sistemidir.** Ödeme webhook'u çalışmazsa para alırsın ama plan aktifleşmez. E-posta webhook'u çalışmazsa destek talepleri kaybolur. Webhook'ları test et, logla, izle.
-- **Build test.** Her deployment'tan önce mutlaka build testi yap. Server-side render hataları sadece build sırasında ortaya çıkar.
-- **Maliyet kontrolü.** Tüm servislerin ücretsiz katmanı var: Vercel, Supabase, Resend, Stripe (komisyon dışında ücret yok). İlk ödeme yapan müşteriye kadar $0/ay ile çalışabilirsin.
-- **Güvenlik asla "sonra" yapılmaz.** Auth ve ödeme ilk günden doğru kurulmalı. "Şimdilik basit yapalım, sonra güvenliği ekleriz" cümlesi felaket reçetesidir.
+- **Create external service accounts early.** Google OAuth approval, DNS propagation, Stripe account review — these can take days. Open accounts on day one.
+- **Environment variable discipline.** Variables without the `NEXT_PUBLIC_` prefix are not visible on the client. Sensitive keys must never have the public prefix.
+- **Webhooks are the nervous system of a SaaS.** If the payment webhook doesn't work, you take money but the plan doesn't activate. If the email webhook fails, support requests disappear. Test, log, and monitor webhooks.
+- **Build test.** Always run a build test before every deployment. Server-side render errors only appear during build.
+- **Cost control.** All services have a free tier: Vercel, Supabase, Resend, Stripe (no charge beyond commission). You can run at $0/month until your first paying customer.
+- **Security is never done "later".** Auth and payments must be set up correctly from day one. "Let's keep it simple for now and add security later" is a recipe for disaster.
