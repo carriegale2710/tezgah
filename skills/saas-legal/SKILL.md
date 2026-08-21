@@ -1,226 +1,210 @@
 ---
 name: saas-legal
 description: >
-  SaaS uygulaması için yasal uyumluluk altyapısı kur. KVKK ve GDPR
-  uyumluluğu, gizlilik politikası, kullanım koşulları, çerez onayı,
-  aydınlatma metni ve veri işleme süreçleri. Bu skill'i kullanıcı yasal
-  gereklilikler, KVKK, GDPR, gizlilik politikası, kullanım koşulları,
-  çerez onayı, kişisel veri veya uyumluluk ile ilgili bir şey istediğinde
-  kullan. "Gizlilik politikası yaz", "KVKK uyumlu yap", "çerez onayı ekle",
-  "yasal sayfaları hazırla" gibi ifadeler tetikler.
+  Set up a legal compliance infrastructure for a SaaS application. GDPR
+  compliance, privacy policy, terms of service, cookie consent, disclosure
+  text, and data processing flows. Use this skill when the user wants
+  anything related to legal requirements, GDPR, privacy policy, terms of
+  service, cookie consent, personal data, or compliance. Phrases like
+  "write a privacy policy", "make it GDPR-compliant", "add cookie consent",
+  "prepare legal pages" trigger this skill.
 ---
 
-# SaaS Legal — Yasal Uyumluluk
+# SaaS Legal — Legal Compliance
 
-Bu skill, bir SaaS uygulamasının yasal uyumluluk katmanını kurar. Yasal gereklilikler "launch sonrası hallederiz" diye ertelenebilecek şeyler değildir — gizlilik politikası olmadan Google OAuth onayı alamazsın, çerez onayı olmadan KVKK cezası riskin var, kullanım koşulları olmadan hukuki korunman yok.
+This skill sets up the legal compliance layer for a SaaS application. Legal requirements are not things that can be deferred with "we'll sort that after launch" — you can't get Google OAuth approval without a privacy policy, you risk fines without cookie consent, and you have no legal protection without terms of service.
 
-**Bağımlılık:** Bu skill **saas-launcher** orkestratör skill'inin Landing Page fazından sonra uygulanır. Bağımsız olarak da kullanılabilir.
+**Dependency:** This skill is applied after the Landing Page phase of the **saas-launcher** orchestrator skill. It can also be used independently.
 
-**Bağlı skill'ler:**
-- **saas-auth** — Google OAuth onay ekranı gizlilik politikası URL'si gerektirir.
-- **saas-analytics** — Tracking ve veri toplama gizlilik politikasında açıklanmalı.
-- **saas-landing-seo** — Yasal sayfalar footer'da link olarak yer almalı.
-
----
-
-## Türkiye'deki SaaS İçin Yasal Çerçeve
-
-### KVKK (Kişisel Verilerin Korunması Kanunu)
-
-KVKK, Türkiye'nin kişisel veri koruma kanunudur (6698 sayılı kanun). AB'nin GDPR'ına benzer ama bazı farklılıkları var.
-
-**Kim uymalı:** Türkiye'deki kullanıcılardan kişisel veri toplayan her gerçek ve tüzel kişi. Solo founder dahil.
-
-**Kişisel veri nedir:** Kimliği belirli veya belirlenebilir kişiye ilişkin her türlü bilgi — ad, e-posta, IP adresi, çerez verileri, ödeme bilgileri, kullanım verileri.
-
-**Temel yükümlülükler:**
-1. **Aydınlatma:** Veri toplamadan önce kullanıcıyı bilgilendir (hangi veri, neden, ne kadar süre)
-2. **Açık rıza:** Zorunlu olmayan veri işleme için kullanıcının onayını al
-3. **Veri güvenliği:** Toplanan veriyi teknik ve idari tedbirlerle koru
-4. **Veri silme:** Kullanıcının talebine 30 gün içinde yanıt ver
-5. **VERBİS kaydı:** Yıllık çalışan sayısı veya ciro eşiğini aşıyorsan VERBİS'e kayıt ol
-
-### GDPR (AB Kullanıcıları Varsa)
-
-AB'deki kullanıcılara hizmet veriyorsan GDPR de geçerli. KVKK'ya ek olarak:
-- Daha katı açık rıza gereksinimleri
-- Veri İşleme Sözleşmesi (DPA) yükümlülüğü
-- Veri ihlali bildirimi (72 saat)
-- Daha yüksek cezalar
-
-**Pratik yaklaşım:** GDPR uyumlu ol, KVKK otomatik olarak karşılanmış olur (GDPR daha katı).
+**Related skills:**
+- **saas-auth** — The Google OAuth consent screen requires a privacy policy URL.
+- **saas-analytics** — Tracking and data collection must be disclosed in the privacy policy.
+- **saas-landing-seo** — Legal pages should appear as links in the footer.
 
 ---
 
-## Gizlilik Politikası
+## Legal Framework for SaaS
 
-### Neden Zorunlu
+### GDPR (General Data Protection Regulation)
 
-- KVKK aydınlatma yükümlülüğü (yasal zorunluluk)
-- Google OAuth onay ekranı (gizlilik politikası URL'si gerekli)
-- App Store / Play Store gereksinimleri (mobil uygulama varsa)
-- Kullanıcı güveni
+GDPR is the EU's personal data protection regulation. It applies to any product that collects personal data from EU residents.
 
-### İçermesi Gerekenler
+**Who must comply:** Every natural or legal person collecting personal data from EU-based users — including solo founders.
 
-**1. Veri sorumlusu bilgileri:**
-- Şirket/kişi adı, adres, iletişim bilgileri
-- Solo founder için kişisel bilgiler yeterli
+**What is personal data:** Any information relating to an identified or identifiable person — name, email, IP address, cookie data, payment information, usage data.
 
-**2. Toplanan veriler:**
-- Kimlik verileri (ad, e-posta)
-- İletişim verileri (e-posta adresi)
-- Ödeme verileri (Stripe/Lemon Squeezy aracılığıyla — kart bilgisi sende saklanmaz)
-- Kullanım verileri (sayfa görüntüleme, tıklama, oturum süresi)
-- Teknik veriler (IP adresi, tarayıcı, cihaz bilgisi)
-- Çerez verileri
+**Core obligations:**
+1. **Disclosure:** Inform users before collecting data (which data, why, for how long)
+2. **Explicit consent:** Obtain user consent for non-mandatory data processing
+3. **Data security:** Protect collected data with technical and administrative safeguards
+4. **Data deletion:** Respond to user requests within 30 days
+5. **Data breach notification:** Notify authorities within 72 hours of a breach
 
-**3. Verilerin işlenme amaçları:**
-- Hizmet sunumu ve hesap yönetimi
-- Ödeme işleme
-- İletişim (transactional e-postalar)
-- Ürün geliştirme ve analitik
-- Yasal yükümlülükler
+### Other Privacy Laws
 
-**4. Verilerin paylaşıldığı üçüncü taraflar:**
-- Supabase (veritabanı barındırma)
-- Stripe / Lemon Squeezy (ödeme işleme)
-- Resend (e-posta gönderimi)
+Depending on your users' location, other regulations may also apply:
+- **CCPA** (California) — for California residents
+- **PIPEDA** (Canada) — for Canadian users
+- **Local laws** — check requirements for the countries you serve
+
+**Practical approach:** If you build to GDPR standards, you'll satisfy most other privacy regulations as a baseline.
+
+---
+
+## Privacy Policy
+
+### Why It's Required
+
+- GDPR disclosure obligation (legal requirement)
+- Google OAuth consent screen (privacy policy URL is a required field)
+- App Store / Play Store requirements (if a mobile app exists)
+- User trust
+
+### What It Must Include
+
+**1. Data controller information:**
+- Company/individual name, address, contact details
+- For solo founders, personal details are sufficient
+
+**2. Data collected:**
+- Identity data (name, email)
+- Contact data (email address)
+- Payment data (via Stripe/Lemon Squeezy — card details are not stored by you)
+- Usage data (page views, clicks, session duration)
+- Technical data (IP address, browser, device info)
+- Cookie data
+
+**3. Purposes for which data is processed:**
+- Service delivery and account management
+- Payment processing
+- Communication (transactional emails)
+- Product development and analytics
+- Legal obligations
+
+**4. Third parties data is shared with:**
+- Supabase (database hosting)
+- Stripe / Lemon Squeezy (payment processing)
+- Resend (email delivery)
 - PostHog (analytics)
 - Vercel (hosting)
-- Google (OAuth — kullanılıyorsa)
+- Google (OAuth — if used)
 
-**5. Veri saklama süresi:**
-- Hesap aktif olduğu sürece
-- Hesap silindikten sonra yasal saklama süresi (fatura verileri için 10 yıl)
-- Anonim analitik verileri süresiz
+**5. Data retention period:**
+- For as long as the account is active
+- After account deletion: legal retention period (10 years for invoice data)
+- Anonymous analytics data: indefinitely
 
-**6. Kullanıcı hakları:**
-- Verilere erişim hakkı
-- Düzeltme hakkı
-- Silme hakkı (hesap silme)
-- İtiraz hakkı
-- Veri taşınabilirliği hakkı
-- Başvuru yöntemi (e-posta adresi)
+**6. User rights:**
+- Right of access
+- Right to rectification
+- Right to erasure (account deletion)
+- Right to object
+- Right to data portability
+- How to submit a request (email address)
 
-**7. Çerez politikası** (ayrı sayfa veya aynı sayfada bölüm)
+**7. Cookie policy** (separate page or a section on the same page)
 
-**8. Güncelleme bilgisi:** Politika değişikliklerinde kullanıcıya bildirim
+**8. Update notice:** Notification to users when the policy changes
 
-### Uygulama
+### Implementation
 
-Gizlilik politikası sayfasını `/privacy` route'unda oluştur. Footer'da her sayfadan erişilebilir olmalı. Son güncelleme tarihini göster.
+Create the privacy policy page at the `/privacy` route. It must be accessible from the footer on every page. Show the last updated date.
 
-**Başlangıçta:** AI aracından taslak üret, projenin gerçek veri işleme süreçlerine göre düzenle. Launch'ı hukukçu bekleme yüzünden erteleme — taslakla çık, ardından bir hukukçuya onaylat.
-
----
-
-## Kullanım Koşulları (Terms of Service)
-
-### İçermesi Gerekenler
-
-1. **Hizmet tanımı:** Ne sunuyorsun
-2. **Kabul koşulları:** Hizmeti kullanarak koşulları kabul etme
-3. **Hesap sorumlulukları:** Kullanıcının hesap güvenliği sorumluluğu
-4. **Kabul edilebilir kullanım:** Yasadışı, zararlı kullanım yasağı
-5. **Ödeme koşulları:** Fiyatlandırma, faturalandırma, iade politikası
-6. **İptal ve fesih:** Nasıl iptal edilir, veriye ne olur
-7. **Fikri mülkiyet:** Senin yazılımın senin, kullanıcının verisi kullanıcının
-8. **Sorumluluk sınırlaması:** Hizmet kesintisi, veri kaybı durumunda sorumluluk sınırı
-9. **Uygulanacak hukuk:** Türk hukuku, yetkili mahkeme
-10. **Değişiklik bildirimi:** Koşullar değişirse kullanıcıya bildirim
-
-Sayfayı `/terms` route'unda oluştur.
+**To start:** Generate a draft with an AI tool, edit it to match your project's actual data processing practices. Don't delay launch waiting for a lawyer — launch with the draft, then have a lawyer review it.
 
 ---
 
-## Çerez Onayı (Cookie Consent)
+## Terms of Service
 
-### Ne Zaman Gerekli
+### What It Must Include
 
-- **Zorunlu çerezler** (oturum, güvenlik): Onay gerekmez — çalışması için teknik olarak gerekli
-- **Analitik çerezler** (PostHog, GA): KVKK ve GDPR kapsamında onay gerekir
-- **Pazarlama çerezleri** (reklam, retargeting): Kesinlikle onay gerekir
+1. **Service description:** What you offer
+2. **Acceptance terms:** Using the service constitutes acceptance of the terms
+3. **Account responsibilities:** User's responsibility for account security
+4. **Acceptable use:** Prohibition of illegal or harmful use
+5. **Payment terms:** Pricing, billing, refund policy
+6. **Cancellation and termination:** How to cancel, what happens to data
+7. **Intellectual property:** Your software is yours, the user's data is theirs
+8. **Limitation of liability:** Liability cap for service outages, data loss
+9. **Governing law:** Applicable jurisdiction and courts
+10. **Change notification:** Notice to users if terms change
 
-### Uygulama Yaklaşımı
-
-**Basit banner:** Sayfanın altında veya üstünde çerez bildirimi. İki buton: "Kabul Et" (tüm çerezler), "Sadece Zorunlu" (analytics kapalı). Kullanıcı seçimini localStorage'da veya cookie'de sakla.
-
-**Detaylı yönetim (opsiyonel):** Çerez kategorilerini ayrı ayrı açma/kapama. İlk aşamada gerekmez.
-
-### PostHog ile Entegrasyon
-
-Kullanıcı analitik çerezlerini reddederse PostHog'u başlatma veya cookieless modda çalıştır. PostHog'un `opt_out_capturing()` ve `opt_in_capturing()` fonksiyonlarını çerez onayı kararına bağla.
-
----
-
-## KVKK Aydınlatma Metni
-
-KVKK'nın özel gereksinimi. Gizlilik politikasından farklı olarak yasal formatta yazılmalı:
-
-1. Veri sorumlusunun kimliği
-2. Kişisel verilerin hangi amaçla işleneceği
-3. İşlenen kişisel verilerin kimlere ve hangi amaçla aktarılabileceği
-4. Kişisel veri toplamanın yöntemi ve hukuki sebebi
-5. İlgili kişinin hakları (KVKK madde 11)
-
-Bu metin kayıt/giriş akışında kullanıcıya gösterilmeli veya erişilebilir olmalı.
+Create the page at the `/terms` route.
 
 ---
 
-## Hesap Silme Akışı (KVKK Madde 7)
+## Cookie Consent
 
-Kullanıcının hesabını ve verilerini silme hakkı yasal zorunluluktur.
+### When It's Required
 
-### Uygulama
+- **Strictly necessary cookies** (session, security): No consent needed — technically required for the service to function
+- **Analytics cookies** (PostHog, GA): Consent required under GDPR
+- **Marketing cookies** (advertising, retargeting): Consent is absolutely required
 
-1. Ayarlar sayfasında "Hesabımı Sil" butonu
-2. Onay adımı: geri dönüşü olmadığını, aktif aboneliğin iptal edileceğini belirt
-3. Aktif abonelik varsa: önce iptal et (bkz. **saas-payments**)
-4. Kullanıcı verisini sil veya anonimleştir
-5. Yasal saklama yükümlülüğü olan verileri (fatura) anonimleştir, silme
-6. Supabase Auth'tan kullanıcıyı sil
-7. Oturumu sonlandır
-8. Üçüncü taraf servislerde veriyi temizle (Stripe müşteri kaydı, PostHog profili)
-9. Kullanıcıya silme onay e-postası gönder
+### Implementation Approach
 
-**Süre:** KVKK'ya göre silme talebi 30 gün içinde sonuçlandırılmalı. Otomatik silme mekanizması kur — manuel süreç ölçeklenmez.
+**Simple banner:** A cookie notice at the bottom or top of the page. Two buttons: "Accept All" (all cookies) and "Necessary Only" (analytics off). Store the user's choice in localStorage or a cookie.
 
----
+**Detailed management (optional):** Toggle individual cookie categories on/off. Not needed in the first phase.
 
-## İade Politikası
+### Integration with PostHog
 
-Ödeme kabul ediyorsan iade politikası olmalı:
-
-- İade koşulları (hangi durumlarda iade yapılır)
-- İade süresi (14 gün, 30 gün)
-- İade yöntemi (aynı ödeme yöntemine)
-- Kısmi iade (dönem ortasında iptal)
-
-Tüketici koruma mevzuatı gereği dijital hizmetlerde 14 gün cayma hakkı olabilir — hukuki danışmanlık al.
+If the user declines analytics cookies, don't initialise PostHog or run it in cookieless mode. Bind PostHog's `opt_out_capturing()` and `opt_in_capturing()` functions to the cookie consent decision.
 
 ---
 
-## Launch Kontrol Listesi
+## Account Deletion Flow (GDPR Article 17)
 
-- [ ] Gizlilik politikası sayfası (`/privacy`) yayında
-- [ ] Kullanım koşulları sayfası (`/terms`) yayında
-- [ ] KVKK aydınlatma metni erişilebilir
-- [ ] Çerez onayı banner'ı çalışıyor
-- [ ] Footer'da gizlilik ve kullanım koşulları linkleri var
-- [ ] Google OAuth onay ekranında gizlilik politikası URL'si
-- [ ] Hesap silme mekanizması çalışıyor
-- [ ] İade politikası belirlenmiş
-- [ ] Veri işleme envanteri çıkarılmış (hangi veri, nerede, neden)
+The user's right to delete their account and data is a legal obligation.
+
+### Implementation
+
+1. "Delete My Account" button on the settings page
+2. Confirmation step: make clear this is irreversible and any active subscription will be cancelled
+3. If there is an active subscription: cancel it first (see **saas-payments**)
+4. Delete or anonymise user data
+5. Anonymise (do not delete) data subject to legal retention requirements (invoices)
+6. Delete the user from the auth system
+7. End the session
+8. Clean up data in third-party services (Stripe customer record, PostHog profile)
+9. Send the user a deletion confirmation email
+
+**Timeline:** Deletion requests must be fulfilled within 30 days. Set up an automated deletion mechanism — a manual process doesn't scale.
+
+---
+
+## Refund Policy
+
+If you accept payments, you must have a refund policy:
+
+- Refund conditions (under what circumstances refunds are given)
+- Refund window (14 days, 30 days)
+- Refund method (to the original payment method)
+- Partial refund (cancellation mid-period)
+
+Consumer protection law may grant a 14-day right of withdrawal for digital services — seek legal advice.
+
+---
+
+## Launch Checklist
+
+- [ ] Privacy policy page (`/privacy`) is live
+- [ ] Terms of service page (`/terms`) is live
+- [ ] Cookie consent banner is working
+- [ ] Footer has links to privacy policy and terms of service
+- [ ] Privacy policy URL on the Google OAuth consent screen
+- [ ] Account deletion mechanism is working
+- [ ] Refund policy has been defined
+- [ ] Data processing inventory has been drawn up (what data, where, why)
 
 ---
 
 ## Gotchas
 
-- **Google OAuth gizlilik politikası olmadan onaylanmaz.** OAuth Consent Screen'de gizlilik politikası URL'si zorunlu alan. Launch'tan önce hazırla.
-- **"Herkes kullanıyor, sorun olmaz" yanılgısı.** KVKK cezaları bireysel veri sorumlularına da uygulanır. Solo founder muaf değildir.
-- **Çerez onayı almadan analytics başlatma.** PostHog veya GA'yı kullanıcı onayı olmadan başlatmak KVKK/GDPR ihlali.
-- **Gizlilik politikasını güncel tutma.** Yeni bir üçüncü taraf servis ekledikçe (analytics, e-posta, CDN) gizlilik politikasını güncelle.
-- **Veri lokasyonu önemli.** KVKK yurt dışına veri aktarımında açık rıza veya yeterli koruma gerektirir. Supabase, Vercel, Stripe gibi servislerin veri merkezlerini gizlilik politikasında belirt.
-- **Fatura verileri silinemez.** Vergi mevzuatı gereği fatura ve ödeme kayıtları 10 yıl saklanmalı. Hesap silinse bile bu veriler anonimleştirilerek tutulmalı.
-- **Hukukçuya danış ama bekleme.** AI ile taslak oluştur, yayınla, ardından hukukçuya onaylat. Hukukçu beklentisi launch'ı aylarca erteleyebilir.
+- **Google OAuth won't be approved without a privacy policy.** The privacy policy URL is a required field on the OAuth Consent Screen. Prepare it before launch.
+- **"Everyone does it, it'll be fine" fallacy.** GDPR fines apply to individual data controllers too. Being a solo founder is no exemption.
+- **Don't start analytics without cookie consent.** Initialising PostHog or GA without user consent is a GDPR violation.
+- **Keep the privacy policy up to date.** Every time you add a new third-party service (analytics, email, CDN), update the privacy policy.
+- **Data location matters.** GDPR requires explicit consent or adequate safeguards for transferring data outside the EU. State the data centre locations of services like Supabase, Vercel, and Stripe in your privacy policy.
+- **Invoice data cannot be deleted.** Tax law requires invoices and payment records to be retained. Even after an account is deleted, this data must be anonymised and kept.
+- **Consult a lawyer, but don't wait.** Generate a draft with AI, publish it, then have a lawyer review it. Waiting for a lawyer can delay the launch by months.
