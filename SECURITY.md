@@ -1,34 +1,34 @@
-# Güvenlik Politikası
+# Security Policy
 
-## Desteklenen Sürümler
+## Supported Versions
 
-| Sürüm | Destek |
-|-------|--------|
-| 1.x   | Aktif  |
+| Version | Support |
+|---------|---------|
+| 1.x     | Active  |
 
-## Güvenlik Açığı Bildirimi
+## Reporting a Vulnerability
 
-Tezgah'ın skill içeriklerinde veya CLI aracında bir güvenlik açığı bulduysanız, lütfen **GitHub Issues üzerinden herkese açık issue açmayın.**
+If you find a security vulnerability in Tezgah's skill content or CLI tool, please **do not open a public issue on GitHub Issues.**
 
-Bunun yerine: **gunerfatih@gmail.com** adresine e-posta gönderin.
+Instead, email: **gunerfatih@gmail.com**
 
-### Bildirimin İçermesi Gerekenler
+### What to Include in Your Report
 
-- Etkilenen skill veya bileşen
-- Açığın açıklaması
-- Tekrar etme adımları (varsa)
-- Potansiyel etkisi
+- The affected skill or component
+- Description of the vulnerability
+- Steps to reproduce (if applicable)
+- Potential impact
 
-### Süreç
+### Process
 
-1. Bildiriminizi 48 saat içinde onaylayacağız
-2. Durumu değerlendirip düzeltme planı oluşturacağız
-3. Düzeltme yayınlandığında sizi bilgilendireceğiz
+1. We will acknowledge your report within 48 hours
+2. We will assess the issue and create a fix plan
+3. We will notify you when the fix is published
 
-### Kapsam
+### Scope
 
-Tezgah bir skill setidir (kod üretim rehberi), çalışan bir uygulama değildir. Güvenlik açığı kapsamı:
+Tezgah is a skill set (a code generation guide), not a running application. The security vulnerability scope covers:
 
-- **Skill içeriklerinde güvensiz kod önerileri** (örn: SQL injection'a açık şema önerisi, güvensiz auth yapılandırması)
-- **CLI aracında güvenlik sorunları** (örn: path traversal, dosya üzerine yazma)
-- **Eksik güvenlik uyarıları** (skill'lerin belirtmesi gereken ama atladığı güvenlik riskleri)
+- **Unsafe code suggestions in skill content** (e.g. a schema suggestion vulnerable to SQL injection, insecure auth configuration)
+- **Security issues in the CLI tool** (e.g. path traversal, file overwriting)
+- **Missing security warnings** (security risks the skills should mention but have omitted)

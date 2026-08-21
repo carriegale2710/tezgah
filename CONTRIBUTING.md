@@ -1,95 +1,95 @@
-# Katkıda Bulunma Rehberi
+# Contributing Guide
 
-Tezgah'a katkıda bulunmak istediğin için teşekkürler! Bu rehber, katkı sürecini açıklar.
+Thank you for wanting to contribute to Tezgah! This guide explains the contribution process.
 
-## Nasıl Katkıda Bulunabilirim?
+## How Can I Contribute?
 
-### Hata Bildirimi
+### Bug Reports
 
-- [GitHub Issues](https://github.com/komunite/tezgah/issues) üzerinden bildirin
-- Hangi skill'de sorun olduğunu belirtin
-- Mümkünse beklenen davranış ile gerçekleşen davranışı açıklayın
+- Report via [GitHub Issues](https://github.com/komunite/tezgah/issues)
+- Specify which skill has the problem
+- If possible, describe the expected behaviour vs what actually happened
 
-### Mevcut Skill'leri İyileştirme
+### Improving Existing Skills
 
-- Güncelliğini yitirmiş bilgileri düzeltin (API değişiklikleri, fiyat güncellemeleri vb.)
-- Yeni gotcha'lar veya best practice'ler ekleyin
-- Türkiye bağlamına özel bilgileri güncelleyin
+- Fix outdated information (API changes, price updates, etc.)
+- Add new gotchas or best practices
+- Update region-specific information
 
-### Yeni Skill Ekleme
+### Adding New Skills
 
-Tezgah'a yeni skill eklemek istiyorsanız:
+If you want to add a new skill to Tezgah:
 
-1. `skills/<skill-adi>/SKILL.md` dosyası oluşturun
-2. YAML frontmatter'da `name` ve `description` alanlarını doldurun
-3. Mevcut skill'lerin formatını takip edin
-4. Bağımlılıkları ve bağlı skill'leri belirtin
+1. Create a `skills/<skill-name>/SKILL.md` file
+2. Fill in the `name` and `description` fields in the YAML frontmatter
+3. Follow the format of existing skills
+4. Specify dependencies and related skills
 
-#### Skill Dosya Formatı
+#### Skill File Format
 
 ```markdown
 ---
-name: skill-adi
+name: skill-name
 description: >
-  Skill'in ne yaptığını ve ne zaman tetiklenmesi gerektiğini açıklayan
-  detaylı açıklama. Claude Code bu açıklamayı kullanarak skill'i doğru
-  zamanda aktifleştirir.
+  A detailed description explaining what the skill does and when it
+  should be triggered. Claude Code uses this description to activate
+  the skill at the right time.
 ---
 
-# Skill Başlığı
+# Skill Title
 
-Skill içeriği...
+Skill content...
 ```
 
-#### Skill Yazım İlkeleri
+#### Skill Writing Principles
 
-- **Türkçe yazın.** Tüm skill içeriği Türkçe olmalı.
-- **Pratik olun.** Teorik bilgi değil, uygulanabilir adımlar verin.
-- **Gotchas bölümü ekleyin.** Pratikten gelen uyarılar çok değerli.
-- **Bağımlılıkları belirtin.** Skill hangi diğer skill'lere bağlı?
-- **Türkiye bağlamını düşünün.** Yerel kısıtlamalar ve avantajlar neler?
+- **Write in English.** All skill content must be in English.
+- **Be practical.** Give actionable steps, not theoretical information.
+- **Add a Gotchas section.** Warnings from real-world experience are very valuable.
+- **Specify dependencies.** Which other skills does this skill depend on?
+- **Think about context.** What local constraints or advantages are relevant?
 
-### Çeviri
+### Translation
 
-Skill'leri başka dillere çevirmek istiyorsanız:
+If you want to translate skills into other languages:
 
-- `skills/<skill-adi>/SKILL.<dil-kodu>.md` formatını kullanın (örn: `SKILL.en.md`)
-- CLI'da dil desteği için PR açın
+- Use the `skills/<skill-name>/SKILL.<lang-code>.md` format (e.g. `SKILL.tr.md`)
+- Open a PR to add language support to the CLI
 
-## Geliştirme Ortamı
+## Development Setup
 
 ```bash
-# Repo'yu klonla
+# Clone the repo
 git clone https://github.com/komunite/tezgah.git
 cd tezgah
 
-# CLI'ı test et
+# Test the CLI
 node bin/tezgah.js list
 node bin/tezgah.js --help
 
-# Testleri çalıştır
+# Run tests
 npm test
 ```
 
-## Pull Request Süreci
+## Pull Request Process
 
-1. Repo'yu fork edin
-2. Feature branch oluşturun (`git checkout -b yeni-ozellik`)
-3. Değişikliklerinizi commit edin
-4. Branch'inizi push edin (`git push origin yeni-ozellik`)
-5. Pull Request açın
+1. Fork the repo
+2. Create a feature branch (`git checkout -b new-feature`)
+3. Commit your changes
+4. Push your branch (`git push origin new-feature`)
+5. Open a Pull Request
 
-### PR Kontrol Listesi
+### PR Checklist
 
-- [ ] Mevcut skill formatına uygun mu?
-- [ ] Türkçe yazım kurallarına dikkat edildi mi?
-- [ ] CHANGELOG.md güncellendi mi?
-- [ ] `npm test` başarılı mı?
+- [ ] Does it follow the existing skill format?
+- [ ] Is it written in English?
+- [ ] Has CHANGELOG.md been updated?
+- [ ] Does `npm test` pass?
 
-## Davranış Kuralları
+## Code of Conduct
 
-Bu proje [Davranış Kuralları](CODE_OF_CONDUCT.md) ile yönetilir. Katılarak bu kurallara uymayı kabul edersiniz.
+This project is governed by the [Code of Conduct](CODE_OF_CONDUCT.md). By participating you agree to abide by its terms.
 
-## Sorularınız mı Var?
+## Questions?
 
-[GitHub Discussions](https://github.com/komunite/tezgah/discussions) üzerinden soru sorabilirsiniz.
+Ask on [GitHub Discussions](https://github.com/komunite/tezgah/discussions).

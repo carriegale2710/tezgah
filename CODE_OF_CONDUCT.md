@@ -1,39 +1,39 @@
-# Davranış Kuralları
+# Code of Conduct
 
-## Taahhüdümüz
+## Our Pledge
 
-Açık ve hoşgörülü bir topluluk oluşturmak adına, katkıda bulunanlar ve yöneticiler olarak projemize katılımı yaş, beden, engellilik, etnik köken, cinsiyet kimliği, deneyim düzeyi, milliyet, kişisel görünüm, ırk, din veya cinsel kimlik ve yönelim ayrımı gözetmeksizin herkes için tacizden uzak bir deneyim haline getirmeyi taahhüt ederiz.
+In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to make participation in our project a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-## Standartlarımız
+## Our Standards
 
-Olumlu bir ortam yaratmaya katkıda bulunan davranışlara örnekler:
+Examples of behaviour that contributes to a positive environment:
 
-- Hoşgörülü ve kapsayıcı bir dil kullanmak
-- Farklı bakış açılarına ve deneyimlere saygı göstermek
-- Yapıcı eleştiriyi zarifçe kabul etmek
-- Topluluk için en iyi olana odaklanmak
-- Diğer topluluk üyelerine empati göstermek
+- Using welcoming and inclusive language
+- Being respectful of differing viewpoints and experiences
+- Gracefully accepting constructive criticism
+- Focusing on what is best for the community
+- Showing empathy towards other community members
 
-Kabul edilemez davranışlara örnekler:
+Examples of unacceptable behaviour:
 
-- Cinselleştirilmiş dil veya görseller kullanmak
-- Trolleme, aşağılayıcı yorumlar ve kişisel veya politik saldırılar
-- Kamusal veya özel taciz
-- Başkalarının fiziksel veya elektronik adresini izinsiz yayınlamak
-- Profesyonel ortamda uygunsuz sayılabilecek diğer davranışlar
+- The use of sexualised language or imagery
+- Trolling, insulting comments, and personal or political attacks
+- Public or private harassment
+- Publishing others' private information (physical or electronic address) without permission
+- Other conduct which could reasonably be considered inappropriate in a professional setting
 
-## Sorumluluklar
+## Responsibilities
 
-Proje yöneticileri, kabul edilebilir davranış standartlarını açıklamaktan ve kabul edilemez davranışlara karşı uygun ve adil düzeltici önlem almaktan sorumludur.
+Project maintainers are responsible for clarifying the standards of acceptable behaviour and are expected to take appropriate and fair corrective action in response to any instances of unacceptable behaviour.
 
-## Kapsam
+## Scope
 
-Bu davranış kuralları, bir kişi projeyi veya topluluğunu temsil ettiği tüm proje alanlarında ve kamusal alanlarda geçerlidir.
+This Code of Conduct applies in all project spaces and in public spaces when an individual is representing the project or its community.
 
-## Uygulama
+## Enforcement
 
-Taciz edici, rahatsız edici veya başka bir şekilde kabul edilemez davranışlar [gunerfatih@gmail.com](mailto:gunerfatih@gmail.com) adresine bildirilebilir. Tüm şikayetler incelenecek ve araştırılacaktır.
+Instances of abusive, harassing, or otherwise unacceptable behaviour may be reported by contacting [gunerfatih@gmail.com](mailto:gunerfatih@gmail.com). All complaints will be reviewed and investigated.
 
-## Kaynak
+## Attribution
 
-Bu davranış kuralları [Contributor Covenant](https://www.contributor-covenant.org/) sürüm 2.1'den uyarlanmıştır.
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.
