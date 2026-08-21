@@ -1,214 +1,214 @@
 ---
 name: saas-analytics
 description: >
-  SaaS uygulaması için PostHog analytics ve ürün analizi kur. Event tracking,
-  kullanıcı tanımlama, feature flag, session replay, funnel analizi ve
-  gizlilik uyumlu yapılandırma. Bu skill'i kullanıcı analytics, PostHog,
-  event tracking, kullanıcı davranışı, feature flag, A/B test, dönüşüm
-  analizi veya metrik takibi ile ilgili bir şey istediğinde kullan.
-  "Analytics kur", "kullanıcıları takip et", "PostHog ekle", "feature flag
-  yap" gibi ifadeler tetikler.
+  Set up PostHog analytics and product analysis for a SaaS application.
+  Event tracking, user identification, feature flags, session replay, funnel
+  analysis, and privacy-compliant configuration. Use this skill when the user
+  wants anything related to user analytics, PostHog, event tracking, user
+  behaviour, feature flags, A/B testing, conversion analysis, or metric
+  tracking. Phrases like "set up analytics", "track users", "add PostHog",
+  "create a feature flag" trigger this skill.
 ---
 
-# SaaS Analytics — PostHog ile Ürün Analizi
+# SaaS Analytics — Product Analysis with PostHog
 
-Bu skill, bir SaaS uygulamasının analitik katmanını kurar. Göremediğin şeyi iyileştiremezsin — kullanıcıların ürünü nasıl kullandığını, nerede takıldığını ve neden ayrıldığını anlamak büyümenin temelidir.
+This skill sets up the analytics layer for a SaaS application. You can't improve what you can't see — understanding how users use your product, where they get stuck, and why they leave is the foundation of growth.
 
-**Bağımlılık:** Bu skill **saas-launcher** orkestratör skill'inin deployment fazıyla birlikte veya sonrasında uygulanır. Bağımsız olarak da kullanılabilir.
+**Dependency:** This skill is applied alongside or after the deployment phase of the **saas-launcher** orchestrator skill. It can also be used independently.
 
-**Bağlı skill'ler:**
-- **saas-auth** — Kullanıcı kimliği analytics ile ilişkilendirilir.
-- **saas-payments** — Gelir metrikleri ve dönüşüm hunileri.
-- **saas-legal** — KVKK/GDPR uyumlu tracking yapılandırması.
+**Related skills:**
+- **saas-auth** — User identity is linked to analytics.
+- **saas-payments** — Revenue metrics and conversion funnels.
+- **saas-legal** — Privacy-compliant tracking configuration.
 
 ---
 
-## Neden PostHog
+## Why PostHog
 
-### Alternatiflerle Karşılaştırma
+### Comparison with Alternatives
 
 **PostHog vs. Google Analytics:**
-- PostHog ürün analizi için tasarlanmış (event bazlı), GA pazarlama analizi için (sayfa görüntüleme bazlı)
-- PostHog self-host edilebilir (veri sende kalır — KVKK avantajı)
-- PostHog'da session replay, feature flag, A/B test dahili
-- GA cookie consent gerektirir (GDPR), PostHog cookieless mode'da çalışabilir
+- PostHog is designed for product analytics (event-based); GA is for marketing analytics (pageview-based)
+- PostHog can be self-hosted (data stays with you — GDPR/privacy advantage)
+- PostHog includes session replay, feature flags, and A/B testing out of the box
+- GA requires cookie consent (GDPR); PostHog can run in cookieless mode
 
 **PostHog vs. Mixpanel:**
-- PostHog açık kaynak, self-host seçeneği
-- PostHog ücretsiz katmanı çok cömert (1M event/ay)
-- Mixpanel'in analiz arayüzü daha olgun ama PostHog hızla yaklaşıyor
+- PostHog is open source with a self-host option
+- PostHog's free tier is very generous (1M events/month)
+- Mixpanel's analytics interface is more mature but PostHog is catching up fast
 
 **PostHog vs. Plausible:**
-- Plausible sadece sayfa analizi — event tracking, funnel, session replay yok
-- Plausible gizlilik odaklı basit analitik için iyi ama SaaS ürün analizi için yetersiz
+- Plausible only covers page analytics — no event tracking, funnels, or session replay
+- Plausible is good for simple privacy-focused analytics but insufficient for SaaS product analysis
 
-**Sonuç:** SaaS için PostHog en dengeli seçim — ürün analizi, feature flag ve session replay tek platformda.
+**Conclusion:** PostHog is the most balanced choice for SaaS — product analytics, feature flags, and session replay in one platform.
 
 ---
 
-## PostHog Kurulumu
+## PostHog Setup
 
 ### Cloud vs. Self-Host
 
-**PostHog Cloud (önerilen başlangıç):** Kayıt ol, proje oluştur, API key al. Ücretsiz katman: aylık 1M event, 5K session recording, 1M feature flag değerlendirmesi.
+**PostHog Cloud (recommended to start):** Sign up, create a project, get your API key. Free tier: 1M events/month, 5K session recordings, 1M feature flag evaluations.
 
-**Self-host:** Docker Compose ile kendi sunucunda çalıştır. Avantaj: veri tamamen sende, KVKK endişesi sıfır. Dezavantaj: sunucu yönetimi, güncelleme sorumluluğu. Büyüdükçe veya yasal gereklilik varsa değerlendir.
+**Self-host:** Run on your own server with Docker Compose. Advantage: data is entirely yours, zero privacy concerns. Disadvantage: server management and update responsibility. Consider when you scale or if there's a legal requirement.
 
-### Next.js Entegrasyonu
+### Next.js Integration
 
-PostHog'un resmi `posthog-js` kütüphanesini kur:
+Install PostHog's official `posthog-js` library:
 
 ```
 npm install posthog-js
 ```
 
-**PostHog Provider oluştur:** Client component olarak bir provider yaz. App Router'da root layout'a ekle. Ortam değişkenleri:
-- `NEXT_PUBLIC_POSTHOG_KEY` — proje API anahtarı (public)
-- `NEXT_PUBLIC_POSTHOG_HOST` — PostHog instance URL'si (cloud için `https://us.i.posthog.com` veya `https://eu.i.posthog.com`)
+**Create a PostHog Provider:** Write a provider as a client component. Add it to the root layout in the App Router. Environment variables:
+- `NEXT_PUBLIC_POSTHOG_KEY` — project API key (public)
+- `NEXT_PUBLIC_POSTHOG_HOST` — PostHog instance URL (`https://us.i.posthog.com` or `https://eu.i.posthog.com` for cloud)
 
-**EU instance kullan.** Türkiye'den çalışıyorsan ve KVKK uyumluluğu önemliyse EU instance seç — veri Avrupa'da kalır.
+**Use the EU instance** if you're working with GDPR compliance in mind — data stays in Europe.
 
 ### Server-Side Tracking
 
-API route'ları ve server component'lerde event göndermek için `posthog-node` kütüphanesini kullan. Server-side tracking özellikle ödeme event'leri, webhook işlemleri ve arka plan görevleri için gerekli.
+Use the `posthog-node` library to send events from API routes and server components. Server-side tracking is especially needed for payment events, webhook processing, and background tasks.
 
 ---
 
-## Event Tracking Tasarımı
+## Event Tracking Design
 
-### İsimlendirme Kuralları
+### Naming Conventions
 
-Tutarlı event isimlendirmesi kritiktir. Kaotik isimler analizi imkânsız kılar.
+Consistent event naming is critical. Chaotic names make analysis impossible.
 
-Format: `nesne_eylem` — küçük harf, alt çizgi ile ayır.
-- `user_signed_up` (kayıt oldu)
-- `plan_upgraded` (plan yükseltti)
-- `project_created` (proje oluşturdu)
-- `checkout_started` (ödeme başlattı)
-- `checkout_completed` (ödeme tamamladı)
+Format: `object_action` — lowercase, separated by underscores.
+- `user_signed_up`
+- `plan_upgraded`
+- `project_created`
+- `checkout_started`
+- `checkout_completed`
 
-**Yapma:** `SignUp`, `user-sign-up`, `Signed Up`, `signup` — tutarsız isimlendirme analiz yapılmasını engeller.
+**Avoid:** `SignUp`, `user-sign-up`, `Signed Up`, `signup` — inconsistent naming prevents analysis.
 
-### Temel Event'ler
+### Core Events
 
-Her SaaS'ta izlenmesi gereken event'ler:
+Events every SaaS should track:
 
-**Dönüşüm hunisi:**
+**Conversion funnel:**
 1. `page_viewed` (properties: path, referrer)
-2. `signup_started` (kayıt formunu açtı)
-3. `user_signed_up` (kayıt tamamlandı, properties: method — google/magic_link)
-4. `checkout_started` (plan seçti, properties: plan, period)
-5. `checkout_completed` (ödeme başarılı, properties: plan, amount)
+2. `signup_started` (opened the signup form)
+3. `user_signed_up` (registration complete, properties: method — google/magic_link)
+4. `checkout_started` (selected a plan, properties: plan, period)
+5. `checkout_completed` (payment successful, properties: plan, amount)
 
-**Ürün kullanımı:**
+**Product usage:**
 - `feature_used` (properties: feature_name)
 - `project_created` / `project_deleted`
 - `settings_updated`
 
-**Ayrılma sinyalleri:**
-- `plan_cancelled` (iptal etti)
-- `plan_downgraded` (düşürdü)
-- `account_deleted` (hesabı sildi)
+**Churn signals:**
+- `plan_cancelled`
+- `plan_downgraded`
+- `account_deleted`
 
-### Property'ler
+### Properties
 
-Her event'e bağlam ekleyen metadata:
-- **Kullanıcı property'leri:** plan, kayıt tarihi, ülke
-- **Event property'leri:** sayfa yolu, buton konumu, seçilen plan
-- **Süper property'ler:** her event'e otomatik eklenen ortak veriler
+Metadata that adds context to each event:
+- **User properties:** plan, signup date, country
+- **Event properties:** page path, button position, selected plan
+- **Super properties:** common data automatically appended to every event
 
 ---
 
-## Kullanıcı Tanımlama
+## User Identification
 
-### Anonim → Tanımlı Geçiş
+### Anonymous → Identified Transition
 
-PostHog her ziyaretçiye anonim bir ID atar. Kullanıcı giriş yapınca `posthog.identify()` ile gerçek kimliğini bağla. Bu sayede giriş öncesi ve sonrası davranışlar tek profilde birleşir.
+PostHog assigns an anonymous ID to every visitor. When a user logs in, link their real identity with `posthog.identify()`. This merges pre-login and post-login behaviour into a single profile.
 
-Identify çağrısında gönderilecek property'ler:
+Properties to send on identify:
 - email
 - name
 - plan
 - created_at
-- stripe_customer_id (opsiyonel)
+- stripe_customer_id (optional)
 
-**Identify'ı auth callback'inde yap.** Giriş başarılı olduktan sonra, dashboard'a yönlendirmeden önce.
+**Call identify in the auth callback** — after a successful login, before redirecting to the dashboard.
 
 ### Group Analytics
 
-Takım/organizasyon bazlı SaaS'larda kullanıcıları gruplara bağla. Bu sayede "şirket bazında kaç aktif kullanıcı var?" gibi soruları cevaplayabilirsin. Tek kullanıcılı SaaS'larda gerekmez.
+In team/organisation-based SaaS, link users to groups. This lets you answer questions like "how many active users does this company have?" Not needed for single-user SaaS.
 
 ---
 
 ## Feature Flags
 
-### Neden PostHog Feature Flags
+### Why PostHog Feature Flags
 
-Ayrı bir feature flag servisi (LaunchDarkly, Flagsmith) yerine PostHog'un dahili feature flag'lerini kullan — ek maliyet yok, analytics ile doğal entegre, aynı dashboard'da yönetim.
+Use PostHog's built-in feature flags instead of a separate service (LaunchDarkly, Flagsmith) — no extra cost, naturally integrated with analytics, managed in the same dashboard.
 
-### Kullanım Alanları
+### Use Cases
 
-- **Kademeli rollout:** Yeni özelliği önce %10 kullanıcıya aç, sorun yoksa %100'e çıkar
-- **Beta testi:** Belirli kullanıcılara veya planlara özel özellik erişimi
-- **A/B testi:** İki farklı UI varyantını karşılaştır, dönüşüm oranlarını ölç
-- **Kill switch:** Sorunlu özelliği anında kapat — deploy gerekmez
+- **Gradual rollout:** Open a new feature to 10% of users first, then roll out to 100% if stable
+- **Beta testing:** Exclusive feature access for specific users or plans
+- **A/B testing:** Compare two UI variants and measure conversion rates
+- **Kill switch:** Instantly disable a problematic feature — no deploy required
 
-### Server-Side Flag Kontrolü
+### Server-Side Flag Checks
 
-Feature flag'leri sadece UI'da değil, API route'larında da kontrol et. Client-side flag kontrolü UX içindir (UI'yı gizle/göster), güvenlik için server-side kontrol zorunludur — client-side kontrol bypass edilebilir.
+Check feature flags in API routes as well as the UI. Client-side flag checks are for UX (hide/show UI); server-side checks are mandatory for security — client-side checks can be bypassed.
 
 ---
 
 ## Session Replay
 
-PostHog'un session replay özelliği kullanıcının ne yaptığını video olarak kaydeder. Hata raporlarını anlamak, UX sorunlarını tespit etmek ve kullanıcı davranışını gözlemlemek için güçlü araç.
+PostHog's session replay records a video of what the user did. A powerful tool for understanding bug reports, identifying UX issues, and observing user behaviour.
 
-### Gizlilik Ayarları
+### Privacy Settings
 
-- Hassas input'ları otomatik maskele (şifre, kart bilgisi, kişisel veri)
-- Belirli element'leri maskelemek için `data-posthog-mask` attribute'ü ekle
-- KVKK uyumluluğu için session replay'i cookie consent'e bağla veya tamamen devre dışı bırak
+- Automatically mask sensitive inputs (passwords, card details, personal data)
+- Add the `data-posthog-mask` attribute to mask specific elements
+- For GDPR/privacy compliance, tie session replay to cookie consent or disable it entirely
 
-**Dikkat:** Session replay çok veri tüketir. Ücretsiz planda 5K kayıt/ay — tüm trafiğe açarsan hızla tükenir. Sampling oranını düşür veya sadece belirli sayfalarda aktifleştir.
+**Warning:** Session replay consumes a lot of quota. The free plan includes 5K recordings/month — enabling it for all traffic will drain quickly. Lower the sampling rate or activate only on specific pages.
 
 ---
 
-## Dashboard ve Metrikler
+## Dashboard and Metrics
 
-### Her SaaS'ın İzlemesi Gereken Metrikler
+### Metrics Every SaaS Should Track
 
-**Büyüme:**
-- Haftalık/aylık kayıt sayısı (trend)
-- Kayıt → aktifleşme oranı (ilk anlamlı aksiyonu yapan oran)
-- Organik vs. referral vs. direkt trafik dağılımı
+**Growth:**
+- Weekly/monthly signup count (trend)
+- Signup → activation rate (users who complete a meaningful first action)
+- Organic vs. referral vs. direct traffic breakdown
 
-**Gelir:**
-- MRR (Aylık Tekrarlayan Gelir)
-- Yeni MRR vs. Churn MRR
-- Plan dağılımı (free/starter/pro)
-- Ortalama gelir per kullanıcı (ARPU)
+**Revenue:**
+- MRR (Monthly Recurring Revenue)
+- New MRR vs. Churned MRR
+- Plan distribution (free/starter/pro)
+- Average revenue per user (ARPU)
 
-**Etkileşim:**
-- Günlük/haftalık/aylık aktif kullanıcı (DAU/WAU/MAU)
-- Core feature kullanım sıklığı
-- Oturum süresi ve derinliği
+**Engagement:**
+- Daily/weekly/monthly active users (DAU/WAU/MAU)
+- Core feature usage frequency
+- Session duration and depth
 
-**Kayıp:**
-- Churn oranı (aylık iptal / toplam abone)
-- İptal öncesi davranış kalıpları
-- İptal nedenleri (anket entegrasyonu)
+**Churn:**
+- Churn rate (monthly cancellations / total subscribers)
+- Behaviour patterns before cancellation
+- Cancellation reasons (survey integration)
 
-### PostHog Dashboard Oluşturma
+### Building PostHog Dashboards
 
-Dashboard'da insight'lar oluştur: trend grafikleri, huniler (funnel), tutma analizi (retention), kullanıcı yolculukları (paths). Takım ile paylaş ve haftalık gözden geçirme ritüeli oluştur.
+Create insights on your dashboard: trend graphs, funnels, retention analysis, user paths. Share with your team and establish a weekly review ritual.
 
 ---
 
 ## Gotchas
 
-- **Event spam'i:** Her tıklamayı ve fare hareketini izleme. Sadece anlamlı aksiyonları event olarak gönder — aksi halde event kotanı gereksiz tüketirsin.
-- **Gizlilik yasaları:** KVKK ve GDPR, kullanıcı verisi toplamadan önce bilgilendirme gerektirir. En azından gizlilik politikasında analytics kullanımını belirt. Cookie consent gerekiyorsa PostHog'un cookieless mode'unu değerlendir.
-- **Adblocker'lar PostHog'u engeller.** Kullanıcıların %20-30'u adblocker kullanır. Server-side tracking ile tamamla veya PostHog'un reverse proxy yöntemini kullan.
-- **Development event'lerini ayır.** Development ortamındaki event'ler production verisini kirletir. Ayrı PostHog projesi veya environment filtresi kullan.
-- **Çok fazla dashboard, az aksiyon.** Dashboard oluşturmak kolay, insight'ı aksiyona dönüştürmek zor. Her metrik için "bu düşerse/yükselirse ne yapacağız?" sorusunu cevapla.
-- **Identify'dan önce event gönderme.** Kullanıcı giriş yaptıktan sonra önce `identify()`, sonra event gönder. Sıra yanlışsa event'ler anonim kalır ve profille birleşmez.
+- **Event spam:** Don't track every click and mouse movement. Only send meaningful actions as events — otherwise you'll needlessly burn through your event quota.
+- **Privacy laws:** GDPR and similar regulations require informing users before collecting their data. At a minimum, disclose analytics use in your privacy policy. If cookie consent is required, consider PostHog's cookieless mode.
+- **Adblockers block PostHog.** 20–30% of users use adblockers. Supplement with server-side tracking or use PostHog's reverse proxy approach.
+- **Separate development events.** Events from your development environment pollute production data. Use a separate PostHog project or an environment filter.
+- **Too many dashboards, too little action.** Building dashboards is easy; turning insights into actions is hard. For every metric, answer "what will we do if this drops/rises?"
+- **Don't send events before identify.** After a user logs in, call `identify()` first, then send events. If the order is wrong, events remain anonymous and won't merge with the profile.

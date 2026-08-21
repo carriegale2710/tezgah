@@ -1,42 +1,42 @@
 # Changelog
 
-Bu dosya [Keep a Changelog](https://keepachangelog.com/tr/1.1.0/) formatını takip eder
-ve proje [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
+This file follows the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format
+and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [1.0.0] - 2026-03-22
 
-### Eklendi
+### Added
 
-**Skill'ler (12 adet):**
-- **saas-launcher** — Orkestratör skill: keşif görüşmesi, tech stack kararları, faz yönetimi
-- **saas-database** — Supabase veritabanı: proje kurulumu, şema tasarımı, RLS, migration, connection pooling
-- **saas-auth** — Kimlik doğrulama: Google OAuth, Magic Link, JWT, korumalı route'lar
-- **saas-payments** — Ödeme sistemi: Stripe/Lemon Squeezy, checkout, webhook, abonelik yönetimi
-- **saas-email** — E-posta altyapısı: Resend/Mailgun, DNS (SPF/DKIM/DMARC), şablonlar
-- **saas-storage** — Dosya depolama: Supabase Storage, yükleme, RLS güvenliği, görsel optimizasyonu
-- **saas-landing-seo** — Landing page ve SEO: bileşenler, metadata, sitemap, Open Graph, blog
-- **saas-legal** — Yasal uyumluluk: KVKK/GDPR, gizlilik politikası, çerez onayı
-- **saas-api-security** — API güvenliği: rate limiting, plan bazlı erişim, input validation
-- **saas-testing** — Test stratejisi: Vitest, Playwright E2E, webhook testi, CI entegrasyonu
-- **saas-analytics** — Ürün analizi: PostHog, event tracking, feature flags, session replay
-- **saas-deployment** — Deployment: Vercel/Railway/Fly.io, domain, SSL, CI/CD, izleme
+**Skills (12 total):**
+- **saas-launcher** — Orchestrator skill: discovery interview, tech stack decisions, phase management
+- **saas-database** — Supabase database: project setup, schema design, RLS, migration, connection pooling
+- **saas-auth** — Authentication: Google OAuth, Magic Link, JWT, protected routes
+- **saas-payments** — Payment system: Stripe/Lemon Squeezy, checkout, webhook, subscription management
+- **saas-email** — Email infrastructure: Resend/Mailgun, DNS (SPF/DKIM/DMARC), templates
+- **saas-storage** — File storage: Supabase Storage, upload, RLS security, image optimisation
+- **saas-landing-seo** — Landing page and SEO: components, metadata, sitemap, Open Graph, blog
+- **saas-legal** — Legal compliance: GDPR/Privacy Act, privacy policy, cookie consent
+- **saas-api-security** — API security: rate limiting, plan-based access, input validation
+- **saas-testing** — Testing strategy: Vitest, Playwright E2E, webhook testing, CI integration
+- **saas-analytics** — Product analytics: PostHog, event tracking, feature flags, session replay
+- **saas-deployment** — Deployment: Vercel/Railway/Fly.io, domain, SSL, CI/CD, monitoring
 
-**CLI aracı:**
-- `tezgah init` — tüm skill'leri kur
-- `tezgah add <skill>` — tek skill ekle
-- `tezgah remove <skill>` — skill kaldır
-- `tezgah update` — kurulu skill'leri güncelle
-- `tezgah doctor` — kurulumu kontrol et
-- `tezgah list` — skill'leri listele
-- Fuzzy matching ile yazım hatası önerisi
-- Terminal renk desteği algılama (NO_COLOR uyumlu)
+**CLI tool:**
+- `tezgah init` — install all skills
+- `tezgah add <skill>` — add a single skill
+- `tezgah remove <skill>` — remove a skill
+- `tezgah update` — update installed skills
+- `tezgah doctor` — check installation
+- `tezgah list` — list skills
+- Typo suggestions via fuzzy matching
+- Terminal colour support detection (NO_COLOR compliant)
 
-**Altyapı:**
+**Infrastructure:**
 - GitHub Actions CI (Node 18/20/22)
-- Otomatik npm release workflow (tag bazlı)
-- ESLint kod kalitesi
-- Otomatik CLI testleri
-- Issue ve PR şablonları
-- Güvenlik politikası (SECURITY.md)
+- Automatic npm release workflow (tag-based)
+- ESLint code quality
+- Automated CLI tests
+- Issue and PR templates
+- Security policy (SECURITY.md)
 
 [1.0.0]: https://github.com/komunite/tezgah/releases/tag/v1.0.0

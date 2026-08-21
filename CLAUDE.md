@@ -1,41 +1,41 @@
 # Tezgah
 
-Tezgah, Claude Code için yazılmış bir SaaS başlatma skill setidir. Türkiye'deki solopreneur'lerin production-ready SaaS uygulaması kurmasını sağlar.
+Tezgah is a SaaS launch skill kit written for Claude Code. It helps solopreneurs build production-ready SaaS applications.
 
-## Proje Yapısı
+## Project Structure
 
-- `skills/` — Claude Code skill dosyaları (SKILL.md formatında)
-- `bin/` — CLI aracı giriş noktası
-- `lib/` — CLI kaynak kodu
-- `test/` — CLI testleri
-- `.github/` — GitHub şablonları, CI/CD ve release workflow
+- `skills/` — Claude Code skill files (SKILL.md format)
+- `bin/` — CLI tool entry point
+- `lib/` — CLI source code
+- `test/` — CLI tests
+- `.github/` — GitHub templates, CI/CD and release workflow
 
-## Skill'ler
+## Skills
 
-Orkestratör: `saas-launcher` — Tüm süreci yönetir, kullanıcıyla keşif görüşmesi yapar, diğer skill'leri sırayla çağırır.
+Orchestrator: `saas-launcher` — Manages the entire process, runs a discovery interview with the user, and calls other skills in sequence.
 
-Uzman skill'ler (her biri bağımsız da kullanılabilir):
-- `saas-database` — Supabase veritabanı (şema, RLS, migration, pooling)
-- `saas-auth` — Kimlik doğrulama (OAuth, Magic Link, JWT)
-- `saas-payments` — Ödeme sistemi (Stripe, Lemon Squeezy)
-- `saas-email` — E-posta altyapısı (Resend, DNS)
-- `saas-storage` — Dosya depolama (Supabase Storage)
-- `saas-landing-seo` — Landing page ve SEO
-- `saas-legal` — Yasal uyumluluk (KVKK, GDPR)
-- `saas-api-security` — API güvenliği ve rate limiting
-- `saas-testing` — Test stratejisi (Vitest, Playwright)
-- `saas-analytics` — Ürün analizi (PostHog)
-- `saas-deployment` — Production deployment ve izleme
+Specialist skills (each can also be used independently):
+- `saas-database` — Supabase database (schema, RLS, migration, pooling)
+- `saas-auth` — Authentication (OAuth, Magic Link, JWT)
+- `saas-payments` — Payment system (Stripe, Lemon Squeezy)
+- `saas-email` — Email infrastructure (Resend, DNS)
+- `saas-storage` — File storage (Supabase Storage)
+- `saas-landing-seo` — Landing page and SEO
+- `saas-legal` — Legal compliance (GDPR, Privacy Act)
+- `saas-api-security` — API security and rate limiting
+- `saas-testing` — Testing strategy (Vitest, Playwright)
+- `saas-analytics` — Product analytics (PostHog)
+- `saas-deployment` — Production deployment and monitoring
 
-## Kurallar
+## Rules
 
-- Tüm skill içerikleri ve CLI çıktıları Türkçedir.
-- CLI sıfır runtime bağımlılıkla çalışır (sadece Node.js built-in modülleri).
-- Skill dosyaları SKILL.md formatında, YAML frontmatter ile yapılandırılmıştır.
-- Her skill'in `name` ve `description` frontmatter alanları vardır.
-- ESLint kod kalitesi için kullanılır.
-- Testler `test/cli.test.js` dosyasında, saf Node.js ile yazılmıştır (test framework yok).
+- All skill content and CLI output is in English.
+- The CLI runs with zero runtime dependencies (Node.js built-ins only).
+- Skill files are structured in SKILL.md format with YAML frontmatter.
+- Each skill has `name` and `description` frontmatter fields.
+- ESLint is used for code quality.
+- Tests are in `test/cli.test.js`, written in plain Node.js (no test framework).
 
-## Varsayılan Tech Stack
+## Default Tech Stack
 
 Next.js (App Router) + TypeScript + Tailwind CSS + shadcn/ui + Supabase + Stripe + Resend + PostHog + Vercel

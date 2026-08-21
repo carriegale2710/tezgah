@@ -1,308 +1,308 @@
 ---
 name: saas-deployment
 description: >
-  SaaS uygulamasını production'a taşı. Vercel, Railway veya Fly.io ile
-  deployment, domain yapılandırması, SSL, ortam değişkenleri, CI/CD,
-  izleme ve operasyonel hazırlık. Bu skill'i kullanıcı deploy, yayınlama,
-  production, hosting, domain, SSL, CI/CD, monitoring veya "siteyi canlıya
-  al" ile ilgili bir şey istediğinde kullan. "Deploy et", "yayınla",
-  "canlıya al", "Vercel'e koy", "domain bağla" gibi ifadeler tetikler.
+  Move a SaaS application to production. Deployment with Vercel, Railway, or
+  Fly.io, domain configuration, SSL, environment variables, CI/CD, monitoring,
+  and operational readiness. Use this skill when the user wants anything
+  related to deploy, publishing, production, hosting, domain, SSL, CI/CD,
+  monitoring, or "going live". Phrases like "deploy", "publish", "go live",
+  "put it on Vercel", "connect a domain" trigger this skill.
 ---
 
-# SaaS Deployment — Production'a Taşıma ve Operasyon
+# SaaS Deployment — Moving to Production and Operations
 
-Bu skill, bir SaaS uygulamasını development ortamından production'a taşır ve operasyonel hazırlığını sağlar. Deployment "kodu sunucuya yüklemek" değildir — tüm dış servisleri production moduna geçirmek, güvenliği doğrulamak ve izleme kurmaktır.
+This skill moves a SaaS application from the development environment to production and ensures its operational readiness. Deployment is not just "uploading code to a server" — it's switching all external services to production mode, verifying security, and setting up monitoring.
 
-**Bağımlılık:** Bu skill **saas-launcher** orkestratör skill'inin Faz 8'idir. Bağımsız olarak da kullanılabilir. İdeal olarak tüm diğer fazlar tamamlandıktan sonra uygulanır.
+**Dependency:** This skill is Phase 8 of the **saas-launcher** orchestrator skill. It can also be used independently. Ideally applied after all other phases are complete.
 
-**Bağlı skill'ler:** Tüm diğer skill'lerin production geçiş adımları bu skill'de toplanır.
-- **saas-auth** — Production OAuth callback URL'leri, production secret
-- **saas-payments** — Live Stripe/LS anahtarları, production webhook URL
-- **saas-email** — DNS doğrulaması tamamlanmış olmalı
-- **saas-landing-seo** — SEO kontrol listesi geçirilmiş olmalı
-- **saas-api-security** — Güvenlik kontrol listesi geçirilmiş olmalı
+**Related skills:** Production migration steps from all other skills are consolidated in this skill.
+- **saas-auth** — Production OAuth callback URLs, production secret
+- **saas-payments** — Live Stripe/LS keys, production webhook URL
+- **saas-email** — DNS verification must be complete
+- **saas-landing-seo** — SEO checklist must be reviewed
+- **saas-api-security** — Security checklist must be reviewed
 
 ---
 
-## Hosting Platformu Seçimi
+## Choosing a Hosting Platform
 
-### Vercel — Varsayılan Önerimiz
+### Vercel — Our Default Recommendation
 
-**Ne zaman seç:** Next.js kullanan hemen hemen her proje için.
+**When to choose:** For almost any project using Next.js.
 
-Neden: Next.js'in yapımcısı olan şirketin hosting platformu. Sıfır konfigürasyon — repo'yu bağla, deploy et, bitti. Otomatik preview deployment'lar (her PR için ayrı URL), edge network ile global düşük latency, dahili analytics ve Web Vitals ölçümü, ücretsiz SSL.
+Why: The hosting platform by the company that makes Next.js. Zero configuration — connect your repo, deploy, done. Automatic preview deployments (a separate URL for each PR), global low latency via edge network, built-in analytics and Web Vitals measurement, free SSL.
 
-Ücretsiz katman sınırları: Aylık 100 GB bandwidth, 100 saat build süresi, serverless function'lar 10 saniye timeout. Çoğu erken SaaS için fazlasıyla yeterli.
+Free tier limits: 100 GB bandwidth/month, 100 hours build time, serverless functions with a 10-second timeout. More than enough for most early-stage SaaS.
 
-Ne zaman yetmez: Uzun süren background job'lar (10 saniyeyi aşan işlemler), WebSocket gerektiren uygulamalar (Vercel WebSocket desteği sınırlı), kendi veritabanını aynı platformda isteyenler.
+When it falls short: Long-running background jobs (operations exceeding 10 seconds), applications requiring WebSockets (Vercel has limited WebSocket support), those who want their own database on the same platform.
 
 ### Railway
 
-**Ne zaman seç:** Veritabanı + uygulama tek platformda olsun isteyenler için.
+**When to choose:** For those who want database and application on a single platform.
 
-Neden: PostgreSQL, Redis, MySQL gibi servisleri aynı platformda barındırır. Cron job ve background worker desteği. Docker container çalıştırma imkânı.
+Why: Hosts services like PostgreSQL, Redis, and MySQL on the same platform. Cron job and background worker support. Ability to run Docker containers.
 
-Ücretsiz katman: Aylık $5 kredi. Küçük projeler için yeterli ama traffic artınca hızla ücretli plana geçiş gerekir.
+Free tier: $5 credit/month. Sufficient for small projects but quickly requires a paid plan as traffic grows.
 
 ### Fly.io
 
-**Ne zaman seç:** Global dağıtım, container bazlı deployment, WebSocket veya uzun süreli bağlantılar gerektiren projeler için.
+**When to choose:** For projects requiring global distribution, container-based deployment, WebSockets, or long-lived connections.
 
-Neden: Container'ları birden fazla bölgede çalıştırır. Persistent volume (kalıcı disk) desteği. WebSocket ve long-polling doğal desteklenir.
+Why: Runs containers across multiple regions. Persistent volume (persistent disk) support. WebSockets and long-polling are natively supported.
 
-Ek yük: Dockerfile yazmak ve yönetmek gerekir. Vercel veya Railway kadar "sıfır konfigürasyon" değil.
+Extra overhead: Writing and managing a Dockerfile is required. Not as "zero configuration" as Vercel or Railway.
 
 ---
 
-## Production'a Geçiş Sırası
+## Migration to Production Order
 
-Deployment sadece "kodu yükle" değildir. Şu sırayı takip et:
+Deployment is not just "upload the code". Follow this order:
 
-### Adım 1: Production Ortam Değişkenleri
+### Step 1: Production Environment Variables
 
-Development'ta kullandığın her değişkenin production karşılığını oluştur. Bunlar farklı olmalıdır:
+Create the production counterpart of every variable used in development. These must be different:
 
 **Auth:**
-- `NEXTAUTH_SECRET` — Production için yeni değer üret (openssl rand -base64 32). Development ile aynı olmamalı.
-- `NEXTAUTH_URL` — Production domain'i: `https://uygulamam.com`
-- Google OAuth Client: Aynı client kullanılabilir ama callback URL'lerine production domain eklenmiş olmalı.
+- `NEXTAUTH_SECRET` — Generate a new value for production (openssl rand -base64 32). Must not be the same as development.
+- `NEXTAUTH_URL` — Production domain: `https://myapp.com`
+- Google OAuth Client: The same client can be used but the production domain must be added to the callback URLs.
 
-**Ödeme (bkz. saas-payments):**
-- Stripe/LS anahtarları: Test anahtarlarından live anahtarlara geç. `sk_test_` → `sk_live_`, `pk_test_` → `pk_live_`.
-- Price ID'ler: Live modda oluşturulan ürünlerin ID'leri test modundakilerden farklıdır. Güncelle.
-- Webhook secret: Production webhook endpoint'i için yeni secret oluşturulur.
+**Payment (see saas-payments):**
+- Stripe/LS keys: Switch from test keys to live keys. `sk_test_` → `sk_live_`, `pk_test_` → `pk_live_`.
+- Price IDs: IDs for products created in live mode are different from those in test mode. Update them.
+- Webhook secret: A new secret is generated for the production webhook endpoint.
 
-**Veritabanı:**
-- Production veritabanı instance'ı kullan. Development DB'sini production'da kullanma.
-- Bağlantı string'inde connection pooling parametrelerini ekle (serverless ortam için).
+**Database:**
+- Use a production database instance. Don't use the development DB in production.
+- Add connection pooling parameters to the connection string (for serverless environments).
 
-**E-posta:**
-- API anahtarı aynı kalabilir ama domain doğrulamasının tamamlanmış olduğunu kontrol et.
+**Email:**
+- The API key can remain the same but verify that domain verification is complete.
 
-**Genel:**
-- `NEXT_PUBLIC_SITE_URL` — Production domain'i: `https://uygulamam.com`
+**General:**
+- `NEXT_PUBLIC_SITE_URL` — Production domain: `https://myapp.com`
 
-### Adım 2: Platform Kurulumu
+### Step 2: Platform Setup
 
-Seçilen hosting platformunda:
-1. Yeni proje oluştur ve GitHub repo'sunu bağla
-2. Ortam değişkenlerini ekle (Adım 1'deki production değerleri)
-3. İlk deploy'u tetikle
-4. Build'in başarılı olduğunu doğrula
+On the chosen hosting platform:
+1. Create a new project and connect the GitHub repo
+2. Add environment variables (the production values from Step 1)
+3. Trigger the first deploy
+4. Verify the build succeeded
 
-### Adım 3: Domain Yapılandırması
+### Step 3: Domain Configuration
 
-**DNS kayıtları:**
-- Hosting platformunun verdiği IP veya CNAME kaydını domain sağlayıcında ekle
-- www → non-www yönlendirmesi ayarla (veya tersi — birini seç, tutarlı ol)
-- SSL sertifikası otomatik oluşturulmasını bekle (genellikle birkaç dakika)
+**DNS records:**
+- Add the IP or CNAME record provided by the hosting platform in your domain registrar
+- Configure www → non-www redirect (or vice versa — pick one and be consistent)
+- Wait for the SSL certificate to be issued automatically (usually a few minutes)
 
-**DNS yayılımı:** 15 dakika ile 48 saat arasında sürebilir. `dig uygulamam.com A` komutu ile yayılımı kontrol et. Sabırlı ol.
+**DNS propagation:** Can take anywhere from 15 minutes to 48 hours. Check propagation with `dig myapp.com A`. Be patient.
 
-### Adım 4: Ödeme Sistemi Production Geçişi
+### Step 4: Payment System Production Migration
 
-Bu adım kritiktir ve dikkatli yapılmalı (detaylar **saas-payments** skill'inde):
+This step is critical and must be done carefully (details in the **saas-payments** skill):
 
-1. Ödeme sağlayıcı dashboard'unda live mode'a geç
-2. Live modda ürünler ve fiyatlar oluştur
-3. Production webhook endpoint'i ekle: `https://uygulamam.com/api/stripe/webhook` (veya Lemon Squeezy karşılığı)
-4. Dinlenecek event'leri seç
-5. Webhook signing secret'ı ortam değişkenlerine ekle
-6. Müşteri portalını yapılandır
+1. Switch to live mode in the payment provider dashboard
+2. Create products and prices in live mode
+3. Add the production webhook endpoint: `https://myapp.com/api/stripe/webhook` (or Lemon Squeezy equivalent)
+4. Select events to listen to
+5. Add the webhook signing secret to environment variables
+6. Configure the customer portal
 
-### Adım 5: Auth Provider Production Geçişi
+### Step 5: Auth Provider Production Migration
 
-Google OAuth (detaylar **saas-auth** skill'inde):
-1. Google Cloud Console'da OAuth Consent Screen'i "Published" yap
-2. Callback URL'lerine production domain'i ekle
-3. App review gerekiyorsa birkaç gün önceden başvur
+Google OAuth (details in the **saas-auth** skill):
+1. Set the OAuth Consent Screen to "Published" in Google Cloud Console
+2. Add the production domain to callback URLs
+3. If app review is required, apply a few days in advance
 
-### Adım 6: E-posta DNS Doğrulaması
+### Step 6: Email DNS Verification
 
-E-posta servisinin dashboard'unda domain doğrulamasının tamamlandığını kontrol et (detaylar **saas-email** skill'inde). SPF, DKIM ve DMARC kayıtlarının üçü de "verified" olmalı.
+Check that domain verification is complete in the email service dashboard (details in the **saas-email** skill). All three of SPF, DKIM, and DMARC records must show "verified".
 
-### Adım 7: Son Doğrulama
+### Step 7: Final Verification
 
-Deploy tamamlandıktan sonra şu testleri yap:
+After the deploy is complete, run these tests:
 
-**Fonksiyonel testler:**
-- Kayıt/giriş akışı çalışıyor mu?
-- Ödeme akışı çalışıyor mu? (Stripe live modda test kartı ile gerçek ödeme yap, sonra iade et)
-- E-postalar teslim ediliyor mu? (spam'a düşmüyor mu?)
-- Webhook'lar çalışıyor mu? (ödeme sonrası plan aktifleşiyor mu?)
-- Korumalı sayfalar giriş yapmadan erişilemez mi?
+**Functional tests:**
+- Is the signup/login flow working?
+- Is the payment flow working? (Make a real payment with a test card in Stripe live mode, then refund it)
+- Are emails being delivered? (Not landing in spam?)
+- Are webhooks working? (Is the plan activating after payment?)
+- Are protected pages inaccessible without logging in?
 
-**SEO testleri (bkz. saas-landing-seo):**
-- sitemap.xml erişilebilir mi?
-- robots.txt erişilebilir mi?
-- OG görselleri doğru çalışıyor mu?
+**SEO tests (see saas-landing-seo):**
+- Is sitemap.xml accessible?
+- Is robots.txt accessible?
+- Are OG images rendering correctly?
 
-**Performans testi:**
-- Lighthouse skoru 90+ mı?
-- İlk yükleme süresi kabul edilebilir mi?
+**Performance test:**
+- Is the Lighthouse score 90+?
+- Is the initial load time acceptable?
 
 ---
 
-## İzleme ve Operasyon
+## Monitoring and Operations
 
-Uygulama production'a çıktıktan sonra izleme hayati önem taşır. Görmediğin hatayı düzeltemezsin, bilmediğin kesintiye müdahale edemezsin.
+Once the application is in production, monitoring is vital. You can't fix an error you can't see, and you can't respond to an outage you don't know about.
 
 ### Uptime Monitoring
 
-Uygulamanın erişilebilir olup olmadığını düzenli kontrol eden dış servis. Health check endpoint'ini (/api/health) dakikada bir kontrol ettirir.
+An external service that regularly checks whether your application is accessible. Point it to your health check endpoint (/api/health) to check every minute.
 
-Önerilen servisler: BetterStack (eski adıyla Better Uptime), UptimeRobot. İkisinin de ücretsiz katmanı yeterli.
+Recommended services: BetterStack (formerly Better Uptime), UptimeRobot. Both have sufficient free tiers.
 
-Kesinti olduğunda e-posta veya SMS ile bildirim alırsın. Müşterilerinden önce sen öğrenmiş olursun.
+You'll receive an email or SMS notification when there's an outage — you'll know before your customers do.
 
 ### Error Tracking
 
-Uygulamada oluşan hataları toplayan, gruplayan ve alert gönderen servis. Kullanıcılar hata raporlamaz — sessizce giderler.
+A service that collects, groups, and alerts on errors in your application. Users don't report errors — they leave silently.
 
-Önerilen: Sentry. Ücretsiz katmanı çoğu erken SaaS için yeterli. Entegrasyonu basit — birkaç satır konfigürasyon.
+Recommended: Sentry. Its free tier is sufficient for most early-stage SaaS. Integration is simple — just a few lines of configuration.
 
-Sentry'nin sağladıkları:
-- Hata mesajı ve stack trace
-- Hangi kullanıcıda olduğu
-- Hangi tarayıcı/cihazda olduğu
-- Hata sıklığı ve trend
-- Yeni hata algılandığında alert
+What Sentry provides:
+- Error message and stack trace
+- Which user experienced it
+- Which browser/device
+- Error frequency and trends
+- Alert when a new error is detected
 
 ### Analytics
 
-Kullanıcıların uygulamayı nasıl kullandığını anlamak için.
+For understanding how users use the application.
 
-Başlangıç için: Vercel Analytics (ücretsiz, dahili) veya Plausible (gizlilik odaklı, basit). Google Analytics da seçenek ama GDPR/KVKK açısından cookie consent gerektirir.
+To start: Vercel Analytics (free, built-in) or Plausible (privacy-focused, simple). Google Analytics is also an option but requires cookie consent for GDPR.
 
-İzlenmesi gereken temel metrikler:
-- Aylık ziyaretçi sayısı
-- Kayıt oranı (ziyaretçi → kayıt)
-- Dönüşüm oranı (kayıt → ödeme)
-- Aktif kullanıcı sayısı (günlük/haftalık/aylık)
-- Churn oranı (iptal eden / toplam abone)
+Key metrics to track:
+- Monthly visitor count
+- Signup rate (visitor → signup)
+- Conversion rate (signup → payment)
+- Active user count (daily/weekly/monthly)
+- Churn rate (cancellations / total subscribers)
 
-### Log Yönetimi
+### Log Management
 
-Vercel, Railway ve Fly.io dahili log görüntüleme sunar. Başlangıç için yeterli. Büyüdükçe Axiom, Datadog veya LogTail gibi bir log toplama servisine geç.
-
----
-
-## CI/CD (Sürekli Entegrasyon / Sürekli Deployment)
-
-### Basit Yaklaşım (Önerilen Başlangıç)
-
-Vercel veya Railway GitHub repo'na bağlandığında zaten CI/CD yapar:
-- `main` branch'e push → otomatik production deploy
-- PR açıldığında → otomatik preview deploy (Vercel)
-
-Bu çoğu erken SaaS için yeterlidir.
-
-### GitHub Actions ile Ek Kontroller
-
-Büyüdükçe deploy öncesi otomatik kontroller ekle:
-- Lint (kod stili kontrolü)
-- Build test (build başarılı mı?)
-- Type check (TypeScript hataları var mı?)
-- Opsiyonel: test suite (birim ve entegrasyon testleri)
-
-Bu kontroller PR'da başarısız olursa merge engellenebilir — production'a bozuk kod gitmesini önler.
+Vercel, Railway, and Fly.io all offer built-in log viewing. Sufficient to start. As you scale, move to a log aggregation service like Axiom, Datadog, or LogTail.
 
 ---
 
-## Yedekleme Stratejisi
+## CI/CD (Continuous Integration / Continuous Deployment)
 
-### Veritabanı Yedekleme
+### Simple Approach (Recommended to Start)
 
-- MongoDB Atlas: Otomatik daily backup (ücretsiz katmanda dahil)
-- Supabase: Point-in-time recovery Pro planda dahil, ücretsiz planda haftalık backup
-- Railway PostgreSQL: pg_dump ile manuel backup veya otomatik backup (ücretli plan)
+When Vercel or Railway is connected to your GitHub repo, CI/CD already happens:
+- Push to `main` branch → automatic production deploy
+- PR opened → automatic preview deploy (Vercel)
 
-### Kod Yedekleme
+This is sufficient for most early-stage SaaS.
 
-Git zaten tüm kodu versiyonlar. GitHub/GitLab repo'su silinmedikçe kod güvende. Ek önlem: lokal clone'u güncel tut.
+### Additional Checks with GitHub Actions
 
-### Ortam Değişkenleri Yedekleme
+As you grow, add automated pre-deploy checks:
+- Lint (code style check)
+- Build test (does the build succeed?)
+- Type check (any TypeScript errors?)
+- Optional: test suite (unit and integration tests)
 
-Platform (Vercel, Railway) çökerse ortam değişkenlerin kaybolabilir. Güvenli bir yerde (1Password, Bitwarden gibi şifre yöneticisi) bir kopyasını tut.
-
----
-
-## Ölçeklendirme Düşünceleri (Büyüdükçe)
-
-Erken aşamada ölçeklendirme düşünme — premature optimization'dan kaçın. Ama şu noktaları aklında tut:
-
-**Vercel'de büyüdükçe:**
-- Function timeout'u (hobby: 10s, pro: 60s) darboğaz olabilir → ağır işleri background job'lara taşı (Inngest, Trigger.dev)
-- Bandwidth limiti aşılırsa → Pro plana geç
-- Edge function'lar için global dağıtım otomatik
-
-**Veritabanında büyüdükçe:**
-- Connection pooling: serverless'ta bağlantı sayısı çabuk tükenir → pooler kullan
-- Index'ler: sorgu yavaşlayınca oluştur, baştan gerekmez
-- Read replica: okuma ağırlıklı uygulamalarda veritabanı yükünü dağıtır
-
-**Genel ilke:** "Optimize etmeden önce ölç." Bir darboğaz yaşamadığın sürece mevcut yapı yeterlidir.
+If these checks fail on a PR, the merge can be blocked — preventing broken code from reaching production.
 
 ---
 
-## Production Geçiş Ana Kontrol Listesi
+## Backup Strategy
 
-### Güvenlik
-- [ ] `NEXTAUTH_SECRET` production için benzersiz üretildi
-- [ ] Ödeme anahtarları live mode'a geçirildi
-- [ ] Webhook URL'leri production domain'e güncellendi
-- [ ] Webhook imza doğrulama aktif
-- [ ] `.env.local` ve hassas dosyalar `.gitignore`'da
-- [ ] Rate limiting en azından login ve webhook endpoint'lerinde aktif
-- [ ] Error tracking (Sentry) kuruldu
+### Database Backup
 
-### Altyapı
-- [ ] Production veritabanı instance'ı oluşturuldu ve bağlandı
-- [ ] Connection pooling yapılandırıldı (serverless ortam)
-- [ ] Domain DNS kayıtları yapılandırıldı
-- [ ] SSL sertifikası aktif (HTTPS çalışıyor)
-- [ ] www → non-www yönlendirmesi ayarlandı
+- MongoDB Atlas: Automatic daily backup (included on the free tier)
+- Supabase: Point-in-time recovery included on the Pro plan; weekly backup on the free plan
+- Railway PostgreSQL: Manual backup with pg_dump or automatic backup (paid plan)
 
-### E-posta
-- [ ] E-posta DNS kayıtları (SPF, DKIM, DMARC) doğrulandı
-- [ ] E-posta domain'i servis tarafında verify edildi
-- [ ] Test e-postası gönderildi ve inbox'a düştüğü doğrulandı
+### Code Backup
 
-### Ödeme
-- [ ] Live modda ürünler ve fiyatlar oluşturuldu
-- [ ] Production webhook endpoint eklendi ve test edildi
-- [ ] Müşteri portalı yapılandırıldı
-- [ ] Test ödeme yapılıp plan aktifleştiği doğrulandı (sonra iade et)
+Git already versions all code. Code is safe as long as the GitHub/GitLab repo isn't deleted. Extra precaution: keep a local clone up to date.
+
+### Environment Variable Backup
+
+If the platform (Vercel, Railway) crashes, your environment variables may be lost. Keep a copy in a secure place (a password manager like 1Password or Bitwarden).
+
+---
+
+## Scaling Considerations (As You Grow)
+
+Don't think about scaling in the early stage — avoid premature optimisation. But keep these points in mind:
+
+**As you grow on Vercel:**
+- Function timeout (hobby: 10s, pro: 60s) can become a bottleneck → move heavy processing to background jobs (Inngest, Trigger.dev)
+- If bandwidth limit is exceeded → move to the Pro plan
+- Global distribution for Edge Functions is automatic
+
+**As you grow on the database:**
+- Connection pooling: connections are quickly exhausted on serverless → use a pooler
+- Indexes: create them when queries slow down, not upfront
+- Read replica: distributes database load in read-heavy applications
+
+**General principle:** "Measure before optimising." Unless you've experienced a bottleneck, your current setup is sufficient.
+
+---
+
+## Production Migration Master Checklist
+
+### Security
+- [ ] `NEXTAUTH_SECRET` generated uniquely for production
+- [ ] Payment keys switched to live mode
+- [ ] Webhook URLs updated to production domain
+- [ ] Webhook signature verification active
+- [ ] `.env.local` and sensitive files in `.gitignore`
+- [ ] Rate limiting active at least on login and webhook endpoints
+- [ ] Error tracking (Sentry) set up
+
+### Infrastructure
+- [ ] Production database instance created and connected
+- [ ] Connection pooling configured (serverless environment)
+- [ ] Domain DNS records configured
+- [ ] SSL certificate active (HTTPS working)
+- [ ] www → non-www redirect configured
+
+### Email
+- [ ] Email DNS records (SPF, DKIM, DMARC) verified
+- [ ] Email domain verified by the service
+- [ ] Test email sent and confirmed to arrive in inbox
+
+### Payment
+- [ ] Products and prices created in live mode
+- [ ] Production webhook endpoint added and tested
+- [ ] Customer portal configured
+- [ ] Test payment made and plan activation confirmed (then refund)
 
 ### SEO
-- [ ] sitemap.xml erişilebilir
-- [ ] robots.txt erişilebilir
-- [ ] OG görselleri test edildi
-- [ ] Google Search Console'a site eklendi
-- [ ] Lighthouse skoru 90+
+- [ ] sitemap.xml accessible
+- [ ] robots.txt accessible
+- [ ] OG images tested
+- [ ] Site added to Google Search Console
+- [ ] Lighthouse score 90+
 
-### İzleme
-- [ ] Uptime monitoring kuruldu (BetterStack / UptimeRobot)
-- [ ] Error tracking kuruldu (Sentry)
-- [ ] Analytics aktif
+### Monitoring
+- [ ] Uptime monitoring set up (BetterStack / UptimeRobot)
+- [ ] Error tracking set up (Sentry)
+- [ ] Analytics active
 
-### Son Fonksiyonel Test
-- [ ] Kayıt/giriş akışı çalışıyor
-- [ ] Ödeme akışı çalışıyor
-- [ ] E-postalar teslim ediliyor
-- [ ] Webhook'lar çalışıyor
-- [ ] Korumalı sayfalar korunuyor
-- [ ] Health check endpoint yanıt veriyor
-- [ ] Build hatasız tamamlanıyor
+### Final Functional Test
+- [ ] Signup/login flow working
+- [ ] Payment flow working
+- [ ] Emails being delivered
+- [ ] Webhooks working
+- [ ] Protected pages are protected
+- [ ] Health check endpoint responding
+- [ ] Build completing without errors
 
 ---
 
 ## Gotchas
 
-- **İlk deploy'da build hatası.** Local'de çalışan kod Vercel'de çökebilir — server component'lerdeki client-only kodlar, eksik ortam değişkenleri veya case-sensitive dosya adları (Linux case-sensitive, macOS değil) en sık nedenler.
-- **Vercel build cache.** Bazen eski build cache'i sorunlara neden olur. Dashboard'da "Redeploy" → "Clear Build Cache" ile temizle.
-- **Preview vs. production ortam değişkenleri.** Vercel'de her ortam (Production, Preview, Development) ayrı değişken seti alabilir. Preview deploy'larda test anahtarlarını, production'da live anahtarlarını kullan.
-- **DNS propagation sabır gerektirir.** 24-48 saat sürebilir. "Deploy ettim ama site açılmıyor" panikleme — DNS yayılımını bekle.
-- **Stripe live modda ilk test.** Live modda gerçek kart ile küçük bir test ödemesi yap, webhook'un çalıştığını doğrula, sonra Stripe dashboard'dan iade et. "Production'da çalışıyor varsayıyorum" deme — doğrula.
-- **Gece launch yapma.** Sorun çıkınca müdahale edebileceğin saatlerde launch et. İdeal: hafta içi sabah.
-- **Rollback planı.** Bir şeyler ters giderse önceki deploy'a geri dönebilmelisin. Vercel'de bu tek tıkla yapılır (önceki deployment'a instant rollback). Platform seçerken bu yeteneği kontrol et.
+- **Build error on first deploy.** Code that works locally can break on Vercel — client-only code in server components, missing environment variables, and case-sensitive filenames (Linux is case-sensitive, macOS is not) are the most common causes.
+- **Vercel build cache.** Stale build cache sometimes causes issues. Clear it with Dashboard → "Redeploy" → "Clear Build Cache".
+- **Preview vs. production environment variables.** In Vercel, each environment (Production, Preview, Development) can have its own variable set. Use test keys in Preview deploys and live keys in production.
+- **DNS propagation requires patience.** Can take 24–48 hours. Don't panic when you "deployed but the site won't load" — wait for DNS propagation.
+- **First test in Stripe live mode.** Make a small test payment with a real card in live mode, verify the webhook fired, then refund it from the Stripe dashboard. Don't say "I assume it works in production" — verify it.
+- **Don't launch at night.** Launch at a time when you can respond to issues. Ideal: weekday morning.
+- **Rollback plan.** If something goes wrong, you need to be able to revert to the previous deploy. On Vercel this is done with a single click (instant rollback to a previous deployment). Check for this capability when choosing a platform.

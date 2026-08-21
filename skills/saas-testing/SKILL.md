@@ -1,191 +1,191 @@
 ---
 name: saas-testing
 description: >
-  SaaS uygulaması için test stratejisi kur. Vitest ile birim test, Playwright
-  ile E2E test, API route testi, webhook mock, Stripe test modu ve CI
-  entegrasyonu. Bu skill'i kullanıcı test, test yazma, E2E, birim test,
-  Playwright, Vitest, coverage veya kalite güvencesi ile ilgili bir şey
-  istediğinde kullan. "Test yaz", "test kur", "E2E ekle", "CI'da test
-  çalıştır" gibi ifadeler tetikler.
+  Set up a testing strategy for a SaaS application. Unit tests with Vitest,
+  E2E tests with Playwright, API route testing, webhook mocking, Stripe test
+  mode, and CI integration. Use this skill when the user wants anything
+  related to testing, writing tests, E2E, unit tests, Playwright, Vitest,
+  coverage, or quality assurance. Phrases like "write tests", "set up
+  testing", "add E2E", "run tests in CI" trigger this skill.
 ---
 
-# SaaS Testing — Test Stratejisi ve Kalite Güvencesi
+# SaaS Testing — Testing Strategy and Quality Assurance
 
-Bu skill, bir SaaS uygulamasının test altyapısını kurar. Test olmadan "production-ready" iddiası eksiktir — ödeme webhook'unun çalıştığını, auth akışının kırılmadığını ve API'nin beklendiği gibi davrandığını sadece testlerle garanti edebilirsin.
+This skill sets up the testing infrastructure for a SaaS application. Without tests, claiming "production-ready" is incomplete — you can only guarantee that the payment webhook works, the auth flow hasn't broken, and the API behaves as expected through tests.
 
-**Bağımlılık:** Bu skill **saas-launcher** orkestratör skill'inin Deployment öncesi kalite güvence adımıdır. Bağımsız olarak da kullanılabilir.
+**Dependency:** This skill is the pre-deployment quality assurance step of the **saas-launcher** orchestrator skill. It can also be used independently.
 
-**Bağlı skill'ler:**
-- **saas-auth** — Giriş/kayıt akışları E2E test edilir.
-- **saas-payments** — Webhook handler'lar ve checkout akışı test edilir.
-- **saas-api-security** — Rate limiting ve input validation testleri.
-
----
-
-## Test Piramidi — SaaS İçin
-
-### Hangi Test Türü Ne Zaman
-
-**Birim Test (Unit Test) — Vitest:**
-Tekil fonksiyonları ve utility'leri test eder. Hızlı çalışır, dış bağımlılık yok. Kullanım: fiyat hesaplama, plan kontrolü, input validation, helper fonksiyonlar.
-
-**Entegrasyon Test (Integration Test) — Vitest:**
-API route'larını test eder. HTTP isteği gönderir, yanıtı doğrular. Kullanım: auth endpoint'leri, checkout API, webhook handler.
-
-**Uçtan Uca Test (E2E Test) — Playwright:**
-Gerçek bir tarayıcıda kullanıcı akışlarını test eder. En yavaş ama en güvenilir. Kullanım: kayıt → giriş → plan satın al → dashboard erişimi.
-
-### Başlangıç Önceliği
-
-Day 1'de her şeyi test etmeye çalışma. Öncelik sırası:
-
-1. **Webhook handler testi** — Para alınıp plan aktifleşmezse gelir kaybı
-2. **Auth akışı E2E testi** — Giriş yapılamazsa uygulama kullanılamaz
-3. **Kritik API route testleri** — Plan kontrolü, kaynak oluşturma
-4. **Input validation testleri** — Güvenlik katmanı
+**Related skills:**
+- **saas-auth** — Login/signup flows are E2E tested.
+- **saas-payments** — Webhook handlers and checkout flow are tested.
+- **saas-api-security** — Rate limiting and input validation tests.
 
 ---
 
-## Vitest Kurulumu
+## The Test Pyramid — For SaaS
 
-### Neden Vitest
+### Which Test Type and When
 
-Jest'e alternatif, modern test runner. Avantajları: Vite tabanlı — çok hızlı, ESM desteği doğal, Jest uyumlu API (geçiş kolay), TypeScript desteği dahili, HMR ile watch mode.
+**Unit Test — Vitest:**
+Tests individual functions and utilities. Runs fast, no external dependencies. Uses: price calculation, plan checking, input validation, helper functions.
 
-### Kurulum
+**Integration Test — Vitest:**
+Tests API routes. Sends HTTP requests, validates responses. Uses: auth endpoints, checkout API, webhook handler.
+
+**End-to-End Test (E2E) — Playwright:**
+Tests user flows in a real browser. Slowest but most reliable. Uses: sign up → log in → purchase plan → access dashboard.
+
+### Starting Priority
+
+Don't try to test everything on Day 1. Priority order:
+
+1. **Webhook handler test** — If money is taken but the plan isn't activated, that's revenue loss
+2. **Auth flow E2E test** — If you can't log in, the app is unusable
+3. **Critical API route tests** — Plan checking, resource creation
+4. **Input validation tests** — Security layer
+
+---
+
+## Vitest Setup
+
+### Why Vitest
+
+A modern test runner, alternative to Jest. Advantages: Vite-based — very fast, native ESM support, Jest-compatible API (easy migration), built-in TypeScript support, watch mode with HMR.
+
+### Installation
 
 ```
 npm install -D vitest @vitejs/plugin-react
 ```
 
-Proje kökünde `vitest.config.ts` oluştur. Test dosyaları için `__tests__/` klasörü veya dosya adında `.test.ts` / `.spec.ts` uzantısı kullan.
+Create `vitest.config.ts` at the project root. Use a `__tests__/` folder for test files or the `.test.ts` / `.spec.ts` extension in the filename.
 
-`package.json`'a script ekle:
-- `"test": "vitest run"` — tek seferlik çalıştır
+Add scripts to `package.json`:
+- `"test": "vitest run"` — run once
 - `"test:watch": "vitest"` — watch mode
-- `"test:coverage": "vitest run --coverage"` — coverage raporu
+- `"test:coverage": "vitest run --coverage"` — coverage report
 
-### API Route Testi Yaklaşımı
+### API Route Testing Approach
 
-Next.js API route'larını test etmek için route handler fonksiyonunu doğrudan import edip mock Request nesnesi ile çağır. Gerçek HTTP sunucusu ayağa kaldırmaya gerek yok.
+To test Next.js API routes, directly import the route handler function and call it with a mock Request object. No need to spin up a real HTTP server.
 
-Her test:
-1. Mock request oluştur (method, headers, body)
-2. Route handler'ı çağır
-3. Response status ve body'yi doğrula
+Each test:
+1. Create a mock request (method, headers, body)
+2. Call the route handler
+3. Validate response status and body
 
-### Webhook Handler Testi
+### Webhook Handler Testing
 
-Webhook testleri en kritik testlerdir. Test stratejisi:
+Webhook tests are the most critical tests. Testing strategy:
 
-1. **İmza doğrulama testi:** Geçerli imza ile webhook'un işlendiğini, geçersiz imza ile reddedildiğini doğrula.
-2. **Event işleme testi:** Her webhook event türü için veritabanı değişikliğini doğrula. Örnek: `checkout.session.completed` → kullanıcı planı "pro" olmalı.
-3. **Idempotency testi:** Aynı event'i iki kez gönder, sonucun değişmediğini doğrula.
+1. **Signature verification test:** Verify that a webhook with a valid signature is processed, and one with an invalid signature is rejected.
+2. **Event processing test:** Verify the database change for each webhook event type. Example: `checkout.session.completed` → user plan should become "pro".
+3. **Idempotency test:** Send the same event twice, verify the result doesn't change.
 
-**Stripe test modu:** Stripe CLI ile webhook'ları localhost'a yönlendir:
+**Stripe test mode:** Forward webhooks to localhost with Stripe CLI:
 ```
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 stripe trigger checkout.session.completed
 ```
 
-### Mock Stratejisi
+### Mock Strategy
 
-Dış servisleri mock'la, kendi kodunu mock'lama:
+Mock external services, don't mock your own code:
 
-- **Mock'lanması gerekenler:** Stripe API, Resend API, Supabase client (isteğe bağlı)
-- **Mock'lanmaması gerekenler:** Kendi utility fonksiyonların, validation şemaların — bunları gerçek çalıştır
+- **Should be mocked:** Stripe API, Resend API, Supabase client (optional)
+- **Should not be mocked:** Your own utility functions, validation schemas — run these for real
 
-Vitest'in `vi.mock()` fonksiyonu ile modül seviyesinde mock:
-- Stripe SDK'yı mock'la — gerçek API çağrısı yapılmasın
-- Resend SDK'yı mock'la — test sırasında e-posta gönderilmesin
+Module-level mocking with Vitest's `vi.mock()` function:
+- Mock the Stripe SDK — prevent real API calls
+- Mock the Resend SDK — prevent emails being sent during tests
 
 ---
 
-## Playwright E2E Kurulumu
+## Playwright E2E Setup
 
-### Neden Playwright
+### Why Playwright
 
-Cypress'e alternatif, modern E2E test aracı. Avantajları: Çoklu tarayıcı desteği (Chromium, Firefox, WebKit), otomatik bekleme (auto-wait), trace viewer ile debugging, headless CI modu.
+A modern E2E testing tool, alternative to Cypress. Advantages: multi-browser support (Chromium, Firefox, WebKit), auto-wait, debugging with trace viewer, headless CI mode.
 
-### Kurulum
+### Installation
 
 ```
 npm install -D @playwright/test
 npx playwright install
 ```
 
-`playwright.config.ts` oluştur. Temel ayarlar:
+Create `playwright.config.ts`. Basic settings:
 - `baseURL`: `http://localhost:3000`
-- `webServer`: test öncesi dev server'ı otomatik başlat
-- `use.trace`: `on-first-retry` — sadece başarısız testlerde trace kaydet
+- `webServer`: automatically start the dev server before tests
+- `use.trace`: `on-first-retry` — record trace only for failing tests
 
-### Temel E2E Senaryoları
+### Core E2E Scenarios
 
-**Auth akışı:**
-1. Landing page'e git
-2. "Giriş Yap" butonuna tıkla
-3. E-posta ile Magic Link giriş formunu doldur (veya test OAuth akışı)
-4. Dashboard'a yönlendirildiğini doğrula
-5. Korumalı sayfaya erişebildiğini doğrula
+**Auth flow:**
+1. Go to the landing page
+2. Click the "Sign In" button
+3. Fill in the magic link login form with an email (or test OAuth flow)
+4. Verify redirection to the dashboard
+5. Verify access to a protected page
 
-**Checkout akışı:**
-1. Giriş yap
-2. Fiyatlandırma sayfasına git
-3. Plan seç
-4. Stripe Checkout'a yönlendirildiğini doğrula
-5. (Test modunda ödeme yap)
-6. Başarı sayfasına dönüşü doğrula
+**Checkout flow:**
+1. Log in
+2. Go to the pricing page
+3. Select a plan
+4. Verify redirection to Stripe Checkout
+5. (Make a payment in test mode)
+6. Verify return to the success page
 
 **Landing page:**
-1. Ana sayfanın yüklendiğini doğrula
-2. Tüm bölümlerin render edildiğini doğrula
-3. CTA butonlarının çalıştığını doğrula
-4. Mobil görünümde navigasyonun çalıştığını doğrula
+1. Verify the homepage loads
+2. Verify all sections render
+3. Verify CTA buttons work
+4. Verify navigation works in mobile view
 
-### Playwright İpuçları
+### Playwright Tips
 
-- **Test izolasyonu:** Her test bağımsız olmalı. Önceki testin state'ine bağımlı olma.
-- **Locator kullan, CSS selector değil:** `page.getByRole()`, `page.getByText()`, `page.getByTestId()` — CSS selector'lar kırılgan.
-- **Auto-wait'e güven:** `waitForTimeout()` kullanma — Playwright elementlerin görünmesini otomatik bekler.
-- **Screenshot on failure:** Başarısız testlerde otomatik screenshot al — CI'da debugging için.
+- **Test isolation:** Each test must be independent. Don't depend on state from a previous test.
+- **Use locators, not CSS selectors:** `page.getByRole()`, `page.getByText()`, `page.getByTestId()` — CSS selectors are brittle.
+- **Trust auto-wait:** Don't use `waitForTimeout()` — Playwright automatically waits for elements to appear.
+- **Screenshot on failure:** Automatically take a screenshot on failing tests — for debugging in CI.
 
 ---
 
-## CI Entegrasyonu
+## CI Integration
 
-### GitHub Actions ile Test
+### Testing with GitHub Actions
 
-CI pipeline'a test adımlarını ekle:
+Add test steps to the CI pipeline:
 
-1. **Birim + entegrasyon testleri:** `vitest run` — her PR'da çalışmalı
-2. **E2E testleri:** `npx playwright test` — her PR'da veya sadece main merge öncesinde
-3. **Coverage raporu:** PR'a yorum olarak coverage değişimini göster
+1. **Unit + integration tests:** `vitest run` — should run on every PR
+2. **E2E tests:** `npx playwright test` — on every PR or only before main merge
+3. **Coverage report:** Show coverage change as a PR comment
 
-### CI'da Playwright
+### Playwright in CI
 
-Playwright CI'da headless modda çalışır. GitHub Actions'da `playwright install --with-deps` ile tarayıcı bağımlılıklarını kur. Başarısız testlerin trace'ini artifact olarak sakla — debugging için indir ve `npx playwright show-trace` ile aç.
+Playwright runs in headless mode in CI. Install browser dependencies with `playwright install --with-deps` in GitHub Actions. Save failing test traces as artifacts — download and open with `npx playwright show-trace` for debugging.
 
 ---
 
 ## Test Coverage
 
-### Hedefler
+### Targets
 
-- **Webhook handler: %100** — Burası para. Her event türü, her edge case test edilmeli.
-- **Auth middleware: %90+** — Güvenlik katmanı yüksek coverage istemeli.
-- **API route'ları: %80+** — Temel akışlar ve hata durumları.
-- **Utility fonksiyonlar: %80+** — İş mantığı.
-- **UI bileşenleri: %50+** — E2E testlerle dolaylı olarak test edilir, birim test önceliği düşük.
+- **Webhook handler: 100%** — This is where the money is. Every event type, every edge case must be tested.
+- **Auth middleware: 90%+** — The security layer should demand high coverage.
+- **API routes: 80%+** — Core flows and error cases.
+- **Utility functions: 80%+** — Business logic.
+- **UI components: 50%+** — Indirectly tested via E2E tests, unit test priority is low.
 
-**%100 genel coverage hedefleme.** Anlamsız testler yazmak, test yazmamak kadar kötüdür. Kritik yolları yüksek coverage'la koru, geri kalanı pragmatik tut.
+**Don't aim for 100% overall coverage.** Writing meaningless tests is just as bad as not writing tests. Protect critical paths with high coverage; keep the rest pragmatic.
 
 ---
 
 ## Gotchas
 
-- **Stripe webhook testi atlanırsa:** "Production'da çalışır" varsayımı en tehlikeli varsayımdır. Stripe CLI ile her event türünü ayrı ayrı test et.
-- **E2E testlerde flaky test sorunu:** Zamanlama bağımlı testler rastgele başarısız olur. `waitForTimeout()` yerine Playwright'ın auto-wait mekanizmasına güven.
-- **Test veritabanı izolasyonu:** Testler production veya development veritabanını kullanmamalı. Ayrı bir test veritabanı veya her test öncesi seed + sonrası temizleme stratejisi uygula.
-- **Mock'lar gerçeklikten kopar.** Mock'ladığın servisin API'si değişirse testlerin hâlâ geçer ama production'da çöker. Düzenli olarak mock'ları gerçek API ile karşılaştır.
-- **CI'da ortam değişkenleri.** Test ortamı için ayrı `.env.test` dosyası veya CI secret'ları kullan. Production anahtarları CI'da olmamalı.
-- **E2E testleri yavaştır.** Tüm E2E suite'ini her commit'te çalıştırmak CI'ı yavaşlatır. Kritik akışları her PR'da, tam suite'i main merge öncesinde çalıştır.
+- **Skipping the Stripe webhook test:** "It'll work in production" is the most dangerous assumption. Test every event type separately with Stripe CLI.
+- **Flaky tests in E2E:** Timing-dependent tests fail randomly. Trust Playwright's auto-wait mechanism instead of `waitForTimeout()`.
+- **Test database isolation:** Tests should not use the production or development database. Use a separate test database or apply a seed-before + clean-after strategy for each test.
+- **Mocks drift from reality.** If the API of a service you've mocked changes, your tests still pass but production breaks. Regularly compare mocks against the real API.
+- **Environment variables in CI.** Use a separate `.env.test` file or CI secrets for the test environment. Production keys must not be in CI.
+- **E2E tests are slow.** Running the full E2E suite on every commit slows down CI. Run critical flows on every PR, the full suite before main merge.
