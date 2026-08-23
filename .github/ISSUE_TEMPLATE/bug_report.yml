@@ -1,17 +1,17 @@
-name: Hata Bildirimi
-description: Bir hata veya sorun bildirin
-title: "[Hata]: "
+name: Bug Report
+description: Report a bug or issue
+title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Hata bildirimi için teşekkürler! Lütfen aşağıdaki bilgileri doldurun.
+        Thank you for reporting a bug! Please fill in the information below.
   - type: dropdown
     id: skill
     attributes:
-      label: İlgili Skill
-      description: Hangi skill ile ilgili?
+      label: Related Skill
+      description: Which skill is this related to?
       options:
         - saas-launcher
         - saas-auth
@@ -20,25 +20,25 @@ body:
         - saas-landing-seo
         - saas-api-security
         - saas-deployment
-        - CLI (tezgah komutu)
-        - Genel
+        - CLI (tezgah command)
+        - General
     validations:
       required: true
   - type: textarea
     id: description
     attributes:
-      label: Sorun Açıklaması
-      description: Ne oldu? Ne olmasını bekliyordun?
+      label: Issue Description
+      description: What happened? What did you expect to happen?
       placeholder: |
-        Beklenen davranış: ...
-        Gerçekleşen davranış: ...
+        Expected behavior: ...
+        Actual behavior: ...
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Tekrar Etme Adımları
-      description: Sorunu tekrar etmek için adımlar
+      label: Steps to Reproduce
+      description: Steps to reproduce the issue
       placeholder: |
         1. ...
         2. ...
@@ -46,5 +46,5 @@ body:
   - type: textarea
     id: context
     attributes:
-      label: Ek Bilgi
-      description: Tech stack, Node.js sürümü, işletim sistemi vb.
+      label: Additional Information
+      description: Tech stack, Node.js version, operating system, etc.

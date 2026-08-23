@@ -1,9 +1,12 @@
-# Tüm değişiklikler proje sahibi tarafından review edilir
-* @komunite
+# All changes are reviewed by the project owner
 
-# Skill içerikleri
+- @komunite
+
+# Skill content
+
 skills/ @komunite
 
-# CLI kodu
+# CLI code
+
 bin/ @komunite
 lib/ @komunite

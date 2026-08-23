@@ -1,22 +1,22 @@
-## Ne Değişti?
+## What Changed?
 
-<!-- Kısa açıklama -->
+<!-- Brief description -->
 
-## Değişiklik Türü
+## Change Type
 
-- [ ] Hata düzeltmesi
-- [ ] Yeni skill
-- [ ] Mevcut skill iyileştirmesi
-- [ ] CLI değişikliği
-- [ ] Dokümantasyon
+- [ ] Bug fix
+- [ ] New skill
+- [ ] Existing skill improvement
+- [ ] CLI change
+- [ ] Documentation
 
-## İlgili Skill
+## Related Skill
 
-<!-- Hangi skill(ler) etkilendi? -->
+<!-- Which skill(s) are affected? -->
 
-## Kontrol Listesi
+## Checklist
 
-- [ ] Mevcut skill formatına uygun
-- [ ] Türkçe yazım kurallarına uygun
-- [ ] CHANGELOG.md güncellendi
-- [ ] `npm test` başarılı
+- [ ] Follows the existing skill format
+- [ ] Follows English writing conventions
+- [ ] CHANGELOG.md updated
+- [ ] `npm test` passes

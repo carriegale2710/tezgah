@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Soru Sorun
+  - name: Ask a Question
     url: https://github.com/komunite/tezgah/discussions
-    about: Hata veya özellik değilse, Discussions'da soru sorabilirsiniz.
+    about: Ask a question in Discussions if this is not a bug or feature request.

@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const { execSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
 
-const CLI = path.resolve(__dirname, '..', 'bin', 'tezgah.js');
-const SKILLS_SRC = path.resolve(__dirname, '..', 'skills');
+const CLI = path.resolve(__dirname, "..", "bin", "tezgah.js");
+const SKILLS_SRC = path.resolve(__dirname, "..", "skills");
 
 let tmpDir;
 let passed = 0;
@@ -15,8 +15,8 @@ let failed = 0;
 function run(args, cwd) {
   return execSync(`node ${CLI} ${args} --no-color`, {
     cwd: cwd || tmpDir,
-    encoding: 'utf-8',
-    env: { ...process.env, NO_COLOR: '1' },
+    encoding: "utf-8",
+    env: { ...process.env, NO_COLOR: "1" },
   });
 }
 
@@ -31,7 +31,7 @@ function assert(condition, message) {
 }
 
 function setup() {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'tezgah-test-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tezgah-test-"));
 }
 
 function cleanup() {
@@ -41,156 +41,209 @@ function cleanup() {
 // --- Tests ---
 
 function testVersion() {
-  const output = run('--version');
-  const pkg = require('../package.json');
-  assert(output.trim() === pkg.version, `--version ciktisi: ${pkg.version}`);
+  const output = run("--version");
+  const pkg = require("../package.json");
+  assert(output.trim() === pkg.version, `--version output: ${pkg.version}`);
 }
 
 function testHelp() {
-  const output = run('help');
-  assert(output.includes('tezgah init'), 'help ciktisi init komutunu iceriyor');
-  assert(output.includes('tezgah add'), 'help ciktisi add komutunu iceriyor');
-  assert(output.includes('tezgah remove'), 'help ciktisi remove komutunu iceriyor');
-  assert(output.includes('tezgah update'), 'help ciktisi update komutunu iceriyor');
-  assert(output.includes('tezgah doctor'), 'help ciktisi doctor komutunu iceriyor');
+  const output = run("help");
+  assert(
+    output.includes("tezgah init"),
+    "help output includes the init command",
+  );
+  assert(output.includes("tezgah add"), "help output includes the add command");
+  assert(
+    output.includes("tezgah remove"),
+    "help output includes the remove command",
+  );
+  assert(
+    output.includes("tezgah update"),
+    "help output includes the update command",
+  );
+  assert(
+    output.includes("tezgah doctor"),
+    "help output includes the doctor command",
+  );
 }
 
 function testList() {
-  const output = run('list');
-  assert(output.includes('saas-launcher'), 'list orkestratoru gosteriyor');
-  assert(output.includes('saas-auth'), 'list saas-auth gosteriyor');
-  assert(output.includes('saas-database'), 'list saas-database gosteriyor');
+  const output = run("list");
+  assert(output.includes("saas-launcher"), "list shows the orchestrator");
+  assert(output.includes("saas-auth"), "list shows saas-auth");
+  assert(output.includes("saas-database"), "list shows saas-database");
 
   const skillDirs = fs.readdirSync(SKILLS_SRC).filter((d) => {
-    return fs.statSync(path.join(SKILLS_SRC, d)).isDirectory() && !d.startsWith('.');
+    return (
+      fs.statSync(path.join(SKILLS_SRC, d)).isDirectory() && !d.startsWith(".")
+    );
   });
-  assert(output.includes(`${skillDirs.length} skill`), `list ${skillDirs.length} skill sayisini gosteriyor`);
+  assert(
+    output.includes(`${skillDirs.length} skill`),
+    `list shows ${skillDirs.length} skills`,
+  );
 }
 
 function testInit() {
-  const output = run('init');
-  assert(output.includes('skill basariyla kuruldu'), 'init basarili mesaji veriyor');
+  const output = run("init");
+  assert(
+    output.includes("installed successfully"),
+    "init displays a success message",
+  );
 
-  const installed = fs.existsSync(path.join(tmpDir, 'skills', 'saas-launcher', 'SKILL.md'));
-  assert(installed, 'init saas-launcher/SKILL.md olusturuyor');
+  const installed = fs.existsSync(
+    path.join(tmpDir, "skills", "saas-launcher", "SKILL.md"),
+  );
+  assert(installed, "init creates saas-launcher/SKILL.md");
 
-  const installed2 = fs.existsSync(path.join(tmpDir, 'skills', 'saas-auth', 'SKILL.md'));
-  assert(installed2, 'init saas-auth/SKILL.md olusturuyor');
+  const installed2 = fs.existsSync(
+    path.join(tmpDir, "skills", "saas-auth", "SKILL.md"),
+  );
+  assert(installed2, "init creates saas-auth/SKILL.md");
 
-  const installed3 = fs.existsSync(path.join(tmpDir, 'skills', 'saas-database', 'SKILL.md'));
-  assert(installed3, 'init saas-database/SKILL.md olusturuyor');
+  const installed3 = fs.existsSync(
+    path.join(tmpDir, "skills", "saas-database", "SKILL.md"),
+  );
+  assert(installed3, "init creates saas-database/SKILL.md");
 }
 
 function testInitNoOverwrite() {
-  run('init');
-  const output = run('init');
-  assert(output.includes('zaten mevcut'), 'init tekrar calistiginda ustune yazmaz');
+  run("init");
+  const output = run("init");
+  assert(
+    output.includes("already exists"),
+    "init does not overwrite existing files",
+  );
 }
 
 function testInitForce() {
-  run('init');
-  const output = run('init --force');
-  assert(output.includes('skill basariyla kuruldu'), 'init --force tekrar kurar');
+  run("init");
+  const output = run("init --force");
+  assert(
+    output.includes("installed successfully"),
+    "init --force reinstalls skills",
+  );
 }
 
 function testInitCustomDir() {
-  const output = run('init --dir custom-skills');
-  assert(output.includes('skill basariyla kuruldu'), 'init --dir basarili');
+  const output = run("init --dir custom-skills");
+  assert(output.includes("installed successfully"), "init --dir succeeds");
 
-  const installed = fs.existsSync(path.join(tmpDir, 'custom-skills', 'saas-launcher', 'SKILL.md'));
-  assert(installed, 'init --dir ozel klasore kuruyor');
+  const installed = fs.existsSync(
+    path.join(tmpDir, "custom-skills", "saas-launcher", "SKILL.md"),
+  );
+  assert(installed, "init --dir installs to a custom directory");
 }
 
 function testAdd() {
-  const output = run('add saas-auth');
-  assert(output.includes('saas-auth/SKILL.md'), 'add tek skill kuruyor');
+  const output = run("add saas-auth");
+  assert(output.includes("saas-auth/SKILL.md"), "add installs a single skill");
 
-  const installed = fs.existsSync(path.join(tmpDir, 'skills', 'saas-auth', 'SKILL.md'));
-  assert(installed, 'add dosyayi olusturuyor');
+  const installed = fs.existsSync(
+    path.join(tmpDir, "skills", "saas-auth", "SKILL.md"),
+  );
+  assert(installed, "add creates the file");
 }
 
 function testAddInvalidSkill() {
-  const output = run('add saas-nonexistent');
-  assert(output.includes('skill bulunamadi'), 'add gecersiz skill icin hata veriyor');
+  const output = run("add saas-nonexistent");
+  assert(output.includes("skill not found"), "add reports an invalid skill");
 }
 
 function testAddSuggestion() {
-  const output = run('add saas-aut');
-  assert(output.includes('saas-auth'), 'add yazim hatasinda oneri sunuyor');
+  const output = run("add saas-aut");
+  assert(output.includes("saas-auth"), "add suggests a correction for a typo");
 }
 
 function testRemove() {
-  run('init');
-  const output = run('remove saas-auth');
-  assert(output.includes('kaldirildi'), 'remove basarili mesaji veriyor');
+  run("init");
+  const output = run("remove saas-auth");
+  assert(output.includes("removed"), "remove displays a success message");
 
-  const exists = fs.existsSync(path.join(tmpDir, 'skills', 'saas-auth', 'SKILL.md'));
-  assert(!exists, 'remove dosyayi siliyor');
+  const exists = fs.existsSync(
+    path.join(tmpDir, "skills", "saas-auth", "SKILL.md"),
+  );
+  assert(!exists, "remove deletes the file");
 }
 
 function testRemoveNotInstalled() {
-  const output = run('remove saas-auth');
-  assert(output.includes('kurulu degil'), 'remove kurulu olmayan skill icin uyariyor');
+  const output = run("remove saas-auth");
+  assert(
+    output.includes("not installed"),
+    "remove warns when a skill is not installed",
+  );
 }
 
 function testUpdate() {
-  run('init');
-  // Modify a file to simulate outdated
-  const dest = path.join(tmpDir, 'skills', 'saas-auth', 'SKILL.md');
-  fs.writeFileSync(dest, '---\nname: saas-auth\n---\nOld content');
+  run("init");
+  // Modify a file to simulate an outdated installation
+  const dest = path.join(tmpDir, "skills", "saas-auth", "SKILL.md");
+  fs.writeFileSync(dest, "---\nname: saas-auth\n---\nOld content");
 
-  const output = run('update');
-  assert(output.includes('guncellendi'), 'update degisen skill\'i guncelliyor');
+  const output = run("update");
+  assert(output.includes("updated"), "update refreshes a changed skill");
 }
 
 function testUpdateNoChanges() {
-  run('init');
-  const output = run('update');
-  assert(output.includes('guncel'), 'update degisiklik yoksa bildiriyor');
+  run("init");
+  const output = run("update");
+  assert(
+    output.includes("up to date"),
+    "update reports when everything is current",
+  );
 }
 
 function testDoctor() {
-  run('init');
-  const output = run('doctor');
-  assert(output.includes('Node.js'), 'doctor Node.js versiyonunu kontrol ediyor');
-  assert(output.includes('skill kurulu'), 'doctor kurulu skill sayisini gosteriyor');
-  assert(output.includes('yolunda'), 'doctor sorun yoksa onayliyor');
+  run("init");
+  const output = run("doctor");
+  assert(output.includes("Node.js"), "doctor checks the Node.js version");
+  assert(
+    output.includes("skill(s) installed"),
+    "doctor shows the number of installed skills",
+  );
+  assert(
+    output.includes("Everything is working"),
+    "doctor confirms when there are no issues",
+  );
 }
 
 function testDoctorMissingSkills() {
-  const output = run('doctor');
-  assert(output.includes('bulunamadi') || output.includes('eksik'), 'doctor eksik skill\'leri bildiriyor');
+  const output = run("doctor");
+  assert(
+    output.includes("not found") || output.includes("missing"),
+    "doctor reports missing skills",
+  );
 }
 
 function testNoColor() {
-  const output = run('list');
-  assert(!output.includes('\x1b['), 'NO_COLOR ortam degiskeninde renk kodu yok');
+  const output = run("list");
+  assert(!output.includes("\x1b["), "NO_COLOR disables color codes");
 }
 
 // --- Runner ---
 
 console.log();
-console.log('\x1b[1mTezgah CLI Testleri\x1b[0m');
+console.log("\x1b[1mTezgah CLI Tests\x1b[0m");
 console.log();
 
 const tests = [
-  ['version', testVersion],
-  ['help', testHelp],
-  ['list', testList],
-  ['init', testInit],
-  ['init (no overwrite)', testInitNoOverwrite],
-  ['init --force', testInitForce],
-  ['init --dir', testInitCustomDir],
-  ['add', testAdd],
-  ['add (invalid)', testAddInvalidSkill],
-  ['add (suggestion)', testAddSuggestion],
-  ['remove', testRemove],
-  ['remove (not installed)', testRemoveNotInstalled],
-  ['update', testUpdate],
-  ['update (no changes)', testUpdateNoChanges],
-  ['doctor', testDoctor],
-  ['doctor (missing)', testDoctorMissingSkills],
-  ['no-color', testNoColor],
+  ["version", testVersion],
+  ["help", testHelp],
+  ["list", testList],
+  ["init", testInit],
+  ["init (no overwrite)", testInitNoOverwrite],
+  ["init --force", testInitForce],
+  ["init --dir", testInitCustomDir],
+  ["add", testAdd],
+  ["add (invalid)", testAddInvalidSkill],
+  ["add (suggestion)", testAddSuggestion],
+  ["remove", testRemove],
+  ["remove (not installed)", testRemoveNotInstalled],
+  ["update", testUpdate],
+  ["update (no changes)", testUpdateNoChanges],
+  ["doctor", testDoctor],
+  ["doctor (missing)", testDoctorMissingSkills],
+  ["no-color", testNoColor],
 ];
 
 for (const [name, fn] of tests) {
@@ -205,7 +258,7 @@ for (const [name, fn] of tests) {
 }
 
 console.log();
-console.log(`  ${passed} gecti, ${failed} basarisiz`);
+console.log(`  ${passed} passed, ${failed} failed`);
 console.log();
 
 if (failed > 0) {
